@@ -1,3 +1,6 @@
+# gitignore
+.gitignore
+
 # Dependencies
 node_modules/
 .pnp
