@@ -11,8 +11,12 @@ export const api = axios.create({
 
 // Crisis API
 export const crisisApi = {
-  list: async (params?: Record<string, string | number>) => {
-    const response = await api.get('/crises', { params });
+  list: async (params?: Record<string, string | number | undefined>) => {
+    // Filter out undefined values
+    const cleanParams = params ? Object.fromEntries(
+      Object.entries(params).filter(([, v]) => v !== undefined)
+    ) : undefined;
+    const response = await api.get('/crises', { params: cleanParams });
     return response.data;
   },
   get: async (id: string) => {
