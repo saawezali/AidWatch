@@ -20,7 +20,7 @@ router.get('/ready', async (req: Request, res: Response) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
     res.json({ ready: true });
-  } catch (error) {
+  } catch {
     res.status(503).json({ ready: false, error: 'Database not ready' });
   }
 });
