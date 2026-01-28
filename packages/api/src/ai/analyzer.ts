@@ -1,7 +1,11 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import { logger } from '../lib/logger';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY || '',
+});
+
+const MODEL = 'llama-3.1-70b-versatile';
 
 export interface AnalysisResult {
   crisisType: string;
@@ -19,8 +23,6 @@ export interface AnalysisResult {
 
 export async function analyzeContent(content: string): Promise<AnalysisResult> {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
-
     const prompt = `You are an expert humanitarian crisis analyst. Analyze the provided content and extract crisis-related information.
           
 Return a JSON object with the following structure (no markdown, just pure JSON):
@@ -42,9 +44,19 @@ Analyze this content for humanitarian crisis indicators:
 
 ${content}`;
 
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      model: MODEL,
+      temperature: 0.3,
+      max_tokens: 1024,
+    });
+
+    const text = chatCompletion.choices[0]?.message?.content || '';
     
     // Parse JSON from response (handle potential markdown code blocks)
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -73,8 +85,6 @@ export async function generateSummary(
   };
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
-
     const prompt = `You are a humanitarian crisis analyst creating actionable summaries for NGOs and responders. 
 Be concise, factual, and focus on actionable information. Use bullet points where appropriate.
 
@@ -85,10 +95,19 @@ ${prompts[type]}
 Based on these events:
 ${events.map((e, i) => `${i + 1}. [${e.source}] ${e.title}: ${e.description}`).join('\n')}`;
 
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    
-    return response.text();
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      model: MODEL,
+      temperature: 0.5,
+      max_tokens: 2048,
+    });
+
+    return chatCompletion.choices[0]?.message?.content || '';
   } catch (error) {
     logger.error('Summary generation failed:', error);
     throw error;
@@ -99,8 +118,6 @@ export async function detectCrisisSignals(
   headlines: string[]
 ): Promise<{ detected: boolean; signals: string[]; confidence: number }> {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
-
     const prompt = `You are an early warning system detecting emerging humanitarian crises.
 Analyze headlines for crisis signals. Return only valid JSON (no markdown):
 {
@@ -113,9 +130,19 @@ Analyze these headlines for emerging crisis signals:
 
 ${headlines.join('\n')}`;
 
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      model: MODEL,
+      temperature: 0.3,
+      max_tokens: 512,
+    });
+
+    const text = chatCompletion.choices[0]?.message?.content || '';
     
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {

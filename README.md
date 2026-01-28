@@ -19,7 +19,7 @@ AidWatch analyzes public data sources to detect emerging humanitarian and infras
 - **Frontend**: React, TypeScript, Vite, TailwindCSS
 - **Database**: PostgreSQL
 - **Cache/Queue**: Redis
-- **AI**: Google Gemini API for NLP analysis
+- **AI**: Groq API (Llama 3.1 70B) for NLP analysis
 
 ## Getting Started
 
