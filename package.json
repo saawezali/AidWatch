@@ -1,0 +1,32 @@
+{
+  "name": "aidwatch",
+  "version": "0.1.0",
+  "description": "AI-powered early warning system for humanitarian and infrastructure crises",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "npm run dev -w @aidwatch/api",
+    "dev:web": "npm run dev -w @aidwatch/web",
+    "build": "npm run build -w @aidwatch/api && npm run build -w @aidwatch/web",
+    "build:api": "npm run build -w @aidwatch/api",
+    "build:web": "npm run build -w @aidwatch/web",
+    "db:generate": "npm run db:generate -w @aidwatch/api",
+    "db:migrate": "npm run db:migrate -w @aidwatch/api",
+    "db:seed": "npm run db:seed -w @aidwatch/api",
+    "lint": "eslint packages --ext .ts,.tsx",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,332 @@
+// This is your Prisma schema file for AidWatch
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// CORE ENTITIES
+// ============================================
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(ANALYST)
+  
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
+  
+  alerts         Alert[]
+  reports        Report[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([email])
+  @@index([organizationId])
+}
+
+enum UserRole {
+  ADMIN
+  ANALYST
+  RESPONDER
+  VIEWER
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  type        OrgType
+  description String?
+  
+  users          User[]
+  alertConfigs   AlertConfig[]
+  watchRegions   WatchRegion[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum OrgType {
+  NGO
+  GOVERNMENT
+  UN_AGENCY
+  PRIVATE
+  RESEARCH
+}
+
+// ============================================
+// CRISIS & EVENTS
+// ============================================
+
+model Crisis {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  type        CrisisType
+  severity    Severity
+  status      CrisisStatus @default(EMERGING)
+  confidence  Float        // AI confidence score 0-1
+  
+  // Location
+  latitude    Float?
+  longitude   Float?
+  country     String?
+  region      String?
+  location    String?      // Human-readable location
+  
+  // Timeline
+  detectedAt  DateTime     @default(now())
+  startedAt   DateTime?
+  resolvedAt  DateTime?
+  
+  // Related data
+  events      Event[]
+  dataSources DataSource[]
+  alerts      Alert[]
+  reports     Report[]
+  summaries   Summary[]
+  
+  // Metadata
+  tags        String[]
+  metadata    Json?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([type])
+  @@index([severity])
+  @@index([status])
+  @@index([country])
+  @@index([detectedAt])
+}
+
+enum CrisisType {
+  NATURAL_DISASTER
+  CONFLICT
+  DISEASE_OUTBREAK
+  FOOD_SECURITY
+  DISPLACEMENT
+  INFRASTRUCTURE
+  ECONOMIC
+  ENVIRONMENTAL
+  OTHER
+}
+
+enum Severity {
+  CRITICAL    // Immediate action required
+  HIGH        // Significant impact
+  MEDIUM      // Moderate concern
+  LOW         // Monitoring
+  UNKNOWN
+}
+
+enum CrisisStatus {
+  EMERGING    // Early signals detected
+  DEVELOPING  // Situation evolving
+  ONGOING     // Active crisis
+  STABILIZING // Situation improving
+  RESOLVED    // Crisis ended
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  source      String   // Source name/URL
+  sourceType  SourceType
+  
+  // Location (optional, for specific events)
+  latitude    Float?
+  longitude   Float?
+  location    String?
+  
+  // Analysis
+  sentiment   Float?   // -1 to 1
+  relevance   Float?   // 0 to 1
+  entities    Json?    // Extracted entities
+  
+  // Relations
+  crisis      Crisis?  @relation(fields: [crisisId], references: [id])
+  crisisId    String?
+  
+  publishedAt DateTime
+  fetchedAt   DateTime @default(now())
+  
+  @@index([crisisId])
+  @@index([publishedAt])
+  @@index([sourceType])
+}
+
+enum SourceType {
+  NEWS
+  SOCIAL_MEDIA
+  GOVERNMENT
+  UN_REPORT
+  NGO_REPORT
+  SATELLITE
+  SENSOR
+  OTHER
+}
+
+// ============================================
+// DATA SOURCES & INGESTION
+// ============================================
+
+model DataSource {
+  id          String     @id @default(cuid())
+  name        String
+  type        SourceType
+  url         String?
+  config      Json?      // API keys, params, etc.
+  isActive    Boolean    @default(true)
+  lastFetched DateTime?
+  
+  crises      Crisis[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ============================================
+// ALERTS & NOTIFICATIONS
+// ============================================
+
+model Alert {
+  id        String      @id @default(cuid())
+  type      AlertType
+  title     String
+  message   String
+  severity  Severity
+  isRead    Boolean     @default(false)
+  
+  crisis    Crisis?     @relation(fields: [crisisId], references: [id])
+  crisisId  String?
+  
+  user      User        @relation(fields: [userId], references: [id])
+  userId    String
+  
+  createdAt DateTime    @default(now())
+  
+  @@index([userId, isRead])
+  @@index([crisisId])
+}
+
+enum AlertType {
+  NEW_CRISIS
+  SEVERITY_CHANGE
+  STATUS_CHANGE
+  SUMMARY_READY
+  THRESHOLD_BREACH
+}
+
+model AlertConfig {
+  id             String       @id @default(cuid())
+  name           String
+  
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+  
+  // Filters
+  crisisTypes    CrisisType[]
+  minSeverity    Severity     @default(MEDIUM)
+  regions        String[]
+  
+  // Channels
+  emailEnabled   Boolean      @default(true)
+  webhookUrl     String?
+  
+  isActive       Boolean      @default(true)
+  
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  @@index([organizationId])
+}
+
+// ============================================
+// WATCH REGIONS
+// ============================================
+
+model WatchRegion {
+  id             String       @id @default(cuid())
+  name           String
+  
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+  
+  // Geographic bounds
+  countries      String[]
+  boundingBox    Json?        // { north, south, east, west }
+  
+  // Monitoring config
+  priority       Int          @default(1)
+  isActive       Boolean      @default(true)
+  
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  @@index([organizationId])
+}
+
+// ============================================
+// REPORTS & SUMMARIES
+// ============================================
+
+model Summary {
+  id        String   @id @default(cuid())
+  content   String   // AI-generated summary
+  type      SummaryType
+  
+  crisis    Crisis   @relation(fields: [crisisId], references: [id])
+  crisisId  String
+  
+  // AI metadata
+  model     String?  // Which AI model generated this
+  tokens    Int?
+  
+  createdAt DateTime @default(now())
+  
+  @@index([crisisId])
+}
+
+enum SummaryType {
+  SITUATION     // Current situation overview
+  TIMELINE      // Chronological summary
+  IMPACT        // Impact assessment
+  RESPONSE      // Response recommendations
+  BRIEFING      // Executive briefing
+}
+
+model Report {
+  id        String       @id @default(cuid())
+  title     String
+  content   String
+  format    ReportFormat @default(MARKDOWN)
+  
+  crisis    Crisis       @relation(fields: [crisisId], references: [id])
+  crisisId  String
+  
+  author    User         @relation(fields: [authorId], references: [id])
+  authorId  String
+  
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  
+  @@index([crisisId])
+  @@index([authorId])
+}
+
+enum ReportFormat {
+  MARKDOWN
+  PDF
+  HTML
+}
