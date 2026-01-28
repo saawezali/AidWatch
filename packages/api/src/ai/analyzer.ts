@@ -1,11 +1,22 @@
 import Groq from 'groq-sdk';
 import { logger } from '../lib/logger';
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY || '',
-});
+// Lazy initialization to ensure env vars are loaded
+let groqClient: Groq | null = null;
 
-const MODEL = 'llama-3.1-70b-versatile';
+function getGroqClient(): Groq {
+  if (!groqClient) {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      throw new Error('GROQ_API_KEY environment variable is not set');
+    }
+    groqClient = new Groq({ apiKey });
+  }
+  return groqClient;
+}
+
+// Using Llama 3.3 70B - the latest available model on Groq
+const MODEL = 'llama-3.3-70b-versatile';
 
 export interface AnalysisResult {
   crisisType: string;
@@ -44,7 +55,7 @@ Analyze this content for humanitarian crisis indicators:
 
 ${content}`;
 
-    const chatCompletion = await groq.chat.completions.create({
+    const chatCompletion = await getGroqClient().chat.completions.create({
       messages: [
         {
           role: 'user',
@@ -95,7 +106,7 @@ ${prompts[type]}
 Based on these events:
 ${events.map((e, i) => `${i + 1}. [${e.source}] ${e.title}: ${e.description}`).join('\n')}`;
 
-    const chatCompletion = await groq.chat.completions.create({
+    const chatCompletion = await getGroqClient().chat.completions.create({
       messages: [
         {
           role: 'user',
@@ -130,7 +141,7 @@ Analyze these headlines for emerging crisis signals:
 
 ${headlines.join('\n')}`;
 
-    const chatCompletion = await groq.chat.completions.create({
+    const chatCompletion = await getGroqClient().chat.completions.create({
       messages: [
         {
           role: 'user',
