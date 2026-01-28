@@ -150,6 +150,7 @@ model Event {
   location    String?
   
   // Analysis
+  analyzed    Boolean  @default(false) // Whether AI has processed this event
   sentiment   Float?   // -1 to 1
   relevance   Float?   // 0 to 1
   entities    Json?    // Extracted entities
@@ -160,10 +161,12 @@ model Event {
   
   publishedAt DateTime
   fetchedAt   DateTime @default(now())
+  createdAt   DateTime @default(now())
   
   @@index([crisisId])
   @@index([publishedAt])
   @@index([sourceType])
+  @@index([analyzed])
 }
 
 enum SourceType {

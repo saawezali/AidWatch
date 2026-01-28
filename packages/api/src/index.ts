@@ -7,12 +7,14 @@ import dotenv from 'dotenv';
 import { logger } from './lib/logger';
 import { errorHandler } from './middleware/errorHandler';
 import { prisma } from './lib/prisma';
+import { initializeScheduledJobs } from './jobs/scheduler';
 
 // Routes
 import crisisRoutes from './routes/crisis';
 import eventRoutes from './routes/events';
 import alertRoutes from './routes/alerts';
 import healthRoutes from './routes/health';
+import aiRoutes from './routes/ai';
 
 dotenv.config({ path: '../../.env' });
 
@@ -45,6 +47,7 @@ app.use('/api/health', healthRoutes);
 app.use('/api/crises', crisisRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/alerts', alertRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Error handling
 app.use(errorHandler);
@@ -63,6 +66,11 @@ process.on('SIGTERM', shutdown);
 app.listen(PORT, () => {
   logger.info(`🚀 AidWatch API running on http://localhost:${PORT}`);
   logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Initialize scheduled jobs for data ingestion and AI analysis
+  if (process.env.NODE_ENV !== 'test') {
+    initializeScheduledJobs();
+  }
 });
 
 export default app;
