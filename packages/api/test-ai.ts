@@ -15,7 +15,7 @@ async function testAI() {
       'At least 2,000 dead and thousands injured. Rescue teams from 20 countries deployed. ' +
       'WHO warns of disease outbreak risk in temporary shelters. UN launches emergency appeal.'
     );
-    console.log('✅ Analysis result:', JSON.stringify(analysis, null, 2));
+    console.log('[Test] Analysis result:', JSON.stringify(analysis, null, 2));
   } catch (error: any) {
     console.error('❌ Analysis failed:', error.message);
   }
@@ -29,7 +29,7 @@ async function testAI() {
       'Food prices surge across East Africa',
       'Armed conflict intensifies in Sudan',
     ]);
-    console.log('✅ Signals detected:', JSON.stringify(signals, null, 2));
+    console.log('[Test] Signals detected:', JSON.stringify(signals, null, 2));
   } catch (error: any) {
     console.error('❌ Signal detection failed:', error.message);
   }
@@ -46,7 +46,7 @@ async function testAI() {
       ],
       'SITUATION'
     );
-    console.log('✅ Summary generated:', summary);
+    console.log('[Test] Summary generated:', summary);
   } catch (error: any) {
     console.error('❌ Summary generation failed:', error.message);
   }

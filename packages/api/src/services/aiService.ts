@@ -50,13 +50,38 @@ export async function processUnanalyzedEvents(batchSize: number = 10): Promise<{
 
     logger.info(`Processing ${unanalyzedEvents.length} unanalyzed events`);
 
+    // Filter out events older than 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
     for (const event of unanalyzedEvents) {
       try {
+        // Skip events older than 30 days
+        if (event.publishedAt && event.publishedAt < thirtyDaysAgo) {
+          await prisma.event.update({
+            where: { id: event.id },
+            data: { analyzed: true },
+          });
+          logger.info(`Skipped old event (>${30} days): "${event.title.substring(0, 50)}..."`);
+          stats.processed++;
+          continue;
+        }
+
         // Analyze the event content
         const content = `${event.title}\n\n${event.description}`;
         const analysis = await analyzeContent(content);
 
         stats.processed++;
+
+        // Skip non-crisis content (general news)
+        if (!analysis.isRelevantCrisis) {
+          await prisma.event.update({
+            where: { id: event.id },
+            data: { analyzed: true },
+          });
+          logger.info(`Skipped non-crisis event: "${event.title.substring(0, 50)}..."`);
+          continue;
+        }
 
         // Check if this event should be linked to an existing crisis
         const existingCrisis = await findMatchingCrisis(event, analysis);
@@ -239,6 +264,83 @@ export async function generateCrisisSummary(
   logger.info(`Generated ${type} summary for crisis "${crisis.title}"`);
 
   return { id: summary.id, content: summaryContent };
+}
+
+// Generate summaries for crises that don't have them
+export async function generateMissingSummaries(batchSize: number = 5): Promise<{
+  generated: number;
+  errors: number;
+}> {
+  const stats = { generated: 0, errors: 0 };
+
+  try {
+    // Find active crises without any summaries
+    const crisesWithoutSummaries = await prisma.crisis.findMany({
+      where: {
+        status: { in: [CrisisStatus.EMERGING, CrisisStatus.ONGOING, CrisisStatus.DEVELOPING] },
+        summaries: { none: {} },
+      },
+      include: {
+        events: { take: 1 }, // Just check if there are events
+      },
+      take: batchSize,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    logger.info(`Found ${crisesWithoutSummaries.length} crises without summaries`);
+
+    for (const crisis of crisesWithoutSummaries) {
+      // Only generate summary if crisis has at least one event
+      if (crisis.events.length === 0) {
+        continue;
+      }
+
+      try {
+        await generateCrisisSummary(crisis.id, SummaryType.SITUATION);
+        stats.generated++;
+        logger.info(`Generated summary for crisis: ${crisis.title}`);
+        
+        // Delay to avoid rate limiting
+        await sleep(1000);
+      } catch (error) {
+        stats.errors++;
+        logger.error(`Failed to generate summary for crisis ${crisis.id}:`, error);
+      }
+    }
+
+    // Also update summaries for crises that haven't been updated in 24 hours
+    const staleThreshold = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const crisesWithStaleSummaries = await prisma.crisis.findMany({
+      where: {
+        status: { in: [CrisisStatus.EMERGING, CrisisStatus.ONGOING, CrisisStatus.DEVELOPING] },
+        updatedAt: { gte: staleThreshold }, // Crisis was updated recently
+        summaries: {
+          every: {
+            createdAt: { lt: staleThreshold }, // But summaries are old
+          },
+        },
+      },
+      take: batchSize,
+    });
+
+    for (const crisis of crisesWithStaleSummaries) {
+      try {
+        await generateCrisisSummary(crisis.id, SummaryType.SITUATION);
+        stats.generated++;
+        logger.info(`Updated summary for crisis: ${crisis.title}`);
+        
+        await sleep(1000);
+      } catch (error) {
+        stats.errors++;
+        logger.error(`Failed to update summary for crisis ${crisis.id}:`, error);
+      }
+    }
+
+    return stats;
+  } catch (error) {
+    logger.error('Error generating missing summaries:', error);
+    throw error;
+  }
 }
 
 // Detect early warning signals from recent events

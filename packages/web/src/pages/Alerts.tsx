@@ -61,7 +61,7 @@ export default function Alerts() {
   const unreadCount = data?.unreadCount || 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mt-12">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

@@ -134,7 +134,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Seeding completed!');
+  console.log('[Seed] Seeding completed!');
   console.log(`   - Created organization: ${org.name}`);
   console.log(`   - Created user: ${user.email}`);
   console.log(`   - Created ${crises.length} sample crises`);

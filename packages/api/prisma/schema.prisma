@@ -333,3 +333,153 @@ enum ReportFormat {
   PDF
   HTML
 }
+
+// ============================================
+// WEBHOOKS & INTEGRATIONS
+// ============================================
+
+model Webhook {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  
+  // Webhook configuration
+  sourceType  WebhookSource
+  endpoint    String        @unique // Unique endpoint path for this webhook
+  secret      String        // Secret for signature verification
+  isActive    Boolean       @default(true)
+  
+  // Optional filtering
+  keywords    String[]      // Filter incoming data by keywords
+  regions     String[]      // Filter by geographic regions
+  minSeverity String?       // Minimum severity to process
+  
+  // Stats
+  lastReceived DateTime?
+  totalEvents  Int          @default(0)
+  failedEvents Int          @default(0)
+  
+  // Related events
+  events      WebhookEvent[]
+  
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  @@index([endpoint])
+  @@index([sourceType])
+  @@index([isActive])
+}
+
+model WebhookEvent {
+  id          String       @id @default(cuid())
+  
+  webhook     Webhook      @relation(fields: [webhookId], references: [id])
+  webhookId   String
+  
+  // Event data
+  payload     Json         // Raw webhook payload
+  headers     Json?        // Request headers for debugging
+  status      WebhookEventStatus @default(PENDING)
+  
+  // Processing results
+  eventId     String?      // If successfully created an Event
+  error       String?      // Error message if failed
+  processedAt DateTime?
+  
+  createdAt   DateTime     @default(now())
+  
+  @@index([webhookId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum WebhookSource {
+  GDACS           // Global Disaster Alert and Coordination System
+  RELIEFWEB       // ReliefWeb API webhooks
+  USGS            // USGS earthquake notifications
+  WHO             // WHO health alerts
+  CUSTOM          // Custom/generic webhook
+  SLACK           // Slack integration
+  TEAMS           // Microsoft Teams
+  TWITTER         // Twitter/X API
+  RSS_FEED        // RSS feed push notifications
+  ZAPIER          // Zapier integration
+  IFTTT           // IFTTT integration
+}
+
+enum WebhookEventStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  SKIPPED
+}
+
+// ============================================
+// PUBLIC ALERT SUBSCRIPTIONS
+// ============================================
+
+model AlertSubscription {
+  id               String              @id @default(cuid())
+  email            String
+  name             String?
+  
+  // What to monitor
+  regions          String[]            // Countries or regions to watch
+  crisisTypes      CrisisType[]        // Types of crises to alert on
+  minSeverity      Severity            @default(MEDIUM)
+  
+  // Notification settings
+  frequency        NotificationFreq    @default(IMMEDIATE)
+  emailVerified    Boolean             @default(false)
+  verificationToken String?            @unique
+  unsubscribeToken String              @unique @default(cuid())
+  
+  // Status
+  isActive         Boolean             @default(true)
+  lastNotifiedAt   DateTime?
+  
+  // Track sent notifications
+  notifications    SentNotification[]
+  
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  
+  @@index([email])
+  @@index([isActive])
+  @@index([regions])
+}
+
+enum NotificationFreq {
+  IMMEDIATE       // Send as soon as crisis detected
+  DAILY           // Daily digest
+  WEEKLY          // Weekly summary
+}
+
+model SentNotification {
+  id             String            @id @default(cuid())
+  
+  subscription   AlertSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  subscriptionId String
+  
+  crisisId       String?
+  subject        String
+  content        String
+  
+  status         EmailStatus       @default(PENDING)
+  sentAt         DateTime?
+  error          String?
+  
+  createdAt      DateTime          @default(now())
+  
+  @@index([subscriptionId])
+  @@index([status])
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+  BOUNCED
+}
+

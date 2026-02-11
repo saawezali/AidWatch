@@ -5,6 +5,7 @@ import CrisisList from './pages/CrisisList';
 import CrisisDetail from './pages/CrisisDetail';
 import MapView from './pages/MapView';
 import Alerts from './pages/Alerts';
+import Subscribe from './pages/Subscribe';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="crises/:id" element={<CrisisDetail />} />
         <Route path="map" element={<MapView />} />
         <Route path="alerts" element={<Alerts />} />
+        <Route path="subscribe" element={<Subscribe />} />
       </Route>
     </Routes>
   );

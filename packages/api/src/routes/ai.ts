@@ -8,6 +8,7 @@ import {
   runEarlyWarningDetection, 
   getAIProcessingStats,
   processUnanalyzedEvents,
+  generateMissingSummaries,
 } from '../services/aiService';
 import { 
   getJobStatus, 
@@ -162,6 +163,25 @@ router.post(
     res.json({
       success: true,
       message: 'Events processed',
+      data: result,
+    });
+  })
+);
+
+// Generate missing summaries for crises
+router.post(
+  '/generate-summaries',
+  asyncHandler(async (req: Request, res: Response) => {
+    const schema = z.object({
+      batchSize: z.coerce.number().min(1).max(20).default(5),
+    });
+    
+    const { batchSize } = schema.parse(req.body);
+    const result = await generateMissingSummaries(batchSize);
+    
+    res.json({
+      success: true,
+      message: 'Summaries generated',
       data: result,
     });
   })

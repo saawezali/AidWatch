@@ -4,6 +4,7 @@ import { ArrowLeft, MapPin, Clock, ExternalLink, Activity, AlertTriangle } from 
 import { crisisApi } from '../lib/api';
 import { formatDistanceToNow, format } from 'date-fns';
 import clsx from 'clsx';
+import ReactMarkdown from 'react-markdown';
 
 const severityColors = {
   CRITICAL: 'bg-red-100 text-red-800 border-red-200',
@@ -191,9 +192,9 @@ export default function CrisisDetail() {
                       {format(new Date(summary.createdAt), 'MMM d, yyyy HH:mm')}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-600 whitespace-pre-line">
-                    {summary.content}
-                  </p>
+                  <div className="text-sm text-slate-600 prose prose-sm prose-slate max-w-none">
+                    <ReactMarkdown>{summary.content}</ReactMarkdown>
+                  </div>
                 </div>
               ))
             )}

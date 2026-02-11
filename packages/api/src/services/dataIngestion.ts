@@ -33,20 +33,20 @@ interface USGSEarthquake {
   };
 }
 
-// Humanitarian-related search terms
+// Humanitarian-related search terms - focused on ACTIVE disasters and crises only
 const CRISIS_KEYWORDS = [
-  'humanitarian crisis',
-  'refugee',
-  'displacement',
-  'famine',
-  'drought',
-  'flooding',
-  'earthquake',
-  'conflict',
-  'epidemic',
-  'outbreak',
-  'emergency aid',
-  'food shortage',
+  'earthquake hits',
+  'flooding evacuation',
+  'hurricane landfall',
+  'wildfire spreads',
+  'drought emergency declaration',
+  'refugee crisis ongoing',
+  'humanitarian emergency relief',
+  'disease outbreak cases',
+  'mass displacement fleeing',
+  'famine hunger crisis',
+  'tsunami alert warning',
+  'volcanic eruption evacuate',
 ];
 
 export async function fetchNewsAPI(): Promise<void> {
@@ -98,9 +98,9 @@ export async function fetchNewsAPI(): Promise<void> {
 
 export async function fetchGDELT(): Promise<void> {
   try {
-    // GDELT Doc API - search for humanitarian-related news
-    const query = 'humanitarian OR refugee OR crisis OR disaster';
-    const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(query)}&mode=artlist&maxrecords=50&format=json`;
+    // GDELT Doc API - search for ACTIVE humanitarian emergencies and disasters only
+    const query = '(earthquake OR flood OR hurricane OR wildfire OR tsunami OR famine) AND (hits OR strikes OR victims OR evacuation OR emergency OR relief OR killed OR injured OR displaced)';
+    const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(query)}&mode=artlist&maxrecords=30&format=json&sourcelang=english`;
 
     const response = await axios.get(url, { timeout: 30000 });
     const articles: GDELTEvent[] = response.data.articles || [];

@@ -15,6 +15,8 @@ import eventRoutes from './routes/events';
 import alertRoutes from './routes/alerts';
 import healthRoutes from './routes/health';
 import aiRoutes from './routes/ai';
+import webhookRoutes from './routes/webhooks';
+import subscriptionRoutes from './routes/subscriptions';
 
 dotenv.config({ path: '../../.env' });
 
@@ -48,6 +50,8 @@ app.use('/api/crises', crisisRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/webhooks', webhookRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
 
 // Error handling
 app.use(errorHandler);
@@ -64,8 +68,8 @@ process.on('SIGTERM', shutdown);
 
 // Start server
 app.listen(PORT, () => {
-  logger.info(`🚀 AidWatch API running on http://localhost:${PORT}`);
-  logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`[Server] AidWatch API running on http://localhost:${PORT}`);
+  logger.info(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
   
   // Initialize scheduled jobs for data ingestion and AI analysis
   if (process.env.NODE_ENV !== 'test') {

@@ -1,111 +1,76 @@
-import { Outlet, NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  AlertTriangle, 
-  Map, 
-  Bell,
-  Globe,
-  Menu,
-  X
-} from 'lucide-react';
-import { useState } from 'react';
-import clsx from 'clsx';
+import { Outlet, useNavigate } from 'react-router-dom';
+import Squares from './Squares';
+import StaggeredMenu from './StaggeredMenu';
 
-const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Crises', href: '/crises', icon: AlertTriangle },
-  { name: 'Map View', href: '/map', icon: Map },
-  { name: 'Alerts', href: '/alerts', icon: Bell },
+const menuItems = [
+  { label: 'Dashboard', ariaLabel: 'Go to dashboard', link: '/' },
+  { label: 'Crises', ariaLabel: 'View active crises', link: '/crises' },
+  { label: 'Map', ariaLabel: 'Open map view', link: '/map' },
+  { label: 'Alerts', ariaLabel: 'View alerts', link: '/alerts' },
+  { label: 'Subscribe', ariaLabel: 'Subscribe to alerts', link: '/subscribe' },
+];
+
+const resourceItems = [
+  { label: 'OCHA', link: 'https://www.unocha.org' },
+  { label: 'ReliefWeb', link: 'https://reliefweb.int' },
+  { label: 'GDACS', link: 'https://gdacs.org' },
+  { label: 'ACLED', link: 'https://acleddata.com' },
 ];
 
 export default function Layout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Mobile sidebar backdrop */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={clsx(
-          'fixed top-0 left-0 z-50 h-full w-64 bg-slate-900 text-white transition-transform lg:translate-x-0',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        )}
-      >
-        <div className="flex items-center justify-between p-4 border-b border-slate-700">
-          <div className="flex items-center gap-2">
-            <Globe className="h-8 w-8 text-primary-400" />
-            <span className="text-xl font-bold">AidWatch</span>
-          </div>
-          <button 
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-1 hover:bg-slate-800 rounded"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <nav className="p-4 space-y-1">
-          {navigation.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.href}
-              className={({ isActive }) =>
-                clsx(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
-                  isActive
-                    ? 'bg-primary-600 text-white'
-                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                )
-              }
-              onClick={() => setSidebarOpen(false)}
-            >
-              <item.icon className="h-5 w-5" />
-              {item.name}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 bg-primary-600 rounded-full flex items-center justify-center">
-              A
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">AidWatch</p>
-              <p className="text-xs text-slate-400 truncate">Crisis Monitoring</p>
-            </div>
-          </div>
-        </div>
-      </aside>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-blue-50/30">
+      {/* Staggered Menu */}
+      <StaggeredMenu
+        position="right"
+        items={menuItems}
+        socialItems={resourceItems}
+        displaySocials={true}
+        displayItemNumbering={true}
+        menuButtonColor="#334155"
+        openMenuButtonColor="#334155"
+        changeMenuColorOnOpen={true}
+        colors={['#dbeafe', '#60a5fa', '#3b82f6']}
+        accentColor="#3b82f6"
+        isFixed={true}
+        onNavigate={(link) => navigate(link)}
+      />
 
       {/* Main content */}
-      <div className="lg:pl-64">
-        {/* Top bar */}
-        <header className="sticky top-0 z-30 bg-white border-b border-slate-200 px-4 py-3">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 hover:bg-slate-100 rounded-lg"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-            <h1 className="text-lg font-semibold text-slate-900">
-              Crisis Monitoring Dashboard
-            </h1>
-          </div>
-        </header>
+      <div className="min-h-screen flex flex-col relative">
+        {/* Animated Squares Background */}
+        <div className="fixed inset-0 z-0 overflow-hidden">
+          <Squares 
+            direction="diagonal"
+            speed={0.4}
+            borderColor="#cbd5e1"
+            squareSize={45}
+            hoverFillColor="#bfdbfe"
+          />
+        </div>
 
         {/* Page content */}
-        <main className="p-6">
-          <Outlet />
+        <main className="flex-1 p-4 md:p-6 pt-20 animate-fade-in relative z-10">
+          <div className="max-w-7xl mx-auto">
+            <Outlet />
+          </div>
         </main>
+
+        {/* Footer */}
+        <footer className="px-6 py-4 border-t border-slate-200 bg-white/50 relative z-10 backdrop-blur-sm">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-slate-500">
+            <p>© 2026 AidWatch. Humanitarian Crisis Monitoring.</p>
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                Live Data
+              </span>
+              <span>v0.1.0</span>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );

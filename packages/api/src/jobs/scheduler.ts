@@ -4,11 +4,18 @@ import { runDataIngestion, getIngestionStats } from '../services/dataIngestion';
 import { 
   processUnanalyzedEvents, 
   runEarlyWarningDetection, 
-  getAIProcessingStats 
+  getAIProcessingStats,
+  generateMissingSummaries,
 } from '../services/aiService';
+import {
+  processImmediateNotifications,
+  processDailyDigest,
+  processWeeklyDigest,
+} from '../services/notificationService';
 
 let isIngestionRunning = false;
 let isAnalysisRunning = false;
+let isSummaryGenerationRunning = false;
 
 // Run data ingestion every 30 minutes
 export function scheduleDataIngestion(): void {
@@ -31,7 +38,7 @@ export function scheduleDataIngestion(): void {
     }
   });
 
-  logger.info('📅 Data ingestion scheduled: every 30 minutes');
+  logger.info('[Scheduler] Data ingestion scheduled: every 30 minutes');
 }
 
 // Run AI analysis every 15 minutes
@@ -54,7 +61,7 @@ export function scheduleAIAnalysis(): void {
     }
   });
 
-  logger.info('📅 AI analysis scheduled: every 15 minutes');
+  logger.info('[Scheduler] AI analysis scheduled: every 15 minutes');
 }
 
 // Run early warning detection every hour
@@ -65,18 +72,88 @@ export function scheduleEarlyWarning(): void {
       const result = await runEarlyWarningDetection();
       
       if (result.detected && result.confidence > 0.7) {
-        logger.warn('⚠️ EARLY WARNING SIGNALS DETECTED:', {
+        logger.warn('[ALERT] EARLY WARNING SIGNALS DETECTED:', {
           signals: result.signals,
           confidence: result.confidence,
         });
-        // TODO: Send alerts/notifications
       }
+      
+      // Process immediate notifications after analysis
+      await processImmediateNotifications();
     } catch (error) {
       logger.error('Early warning detection failed:', error);
     }
   });
 
-  logger.info('📅 Early warning detection scheduled: every hour');
+  logger.info('[Scheduler] Early warning detection scheduled: every hour');
+}
+
+// Run immediate notifications every 15 minutes (after AI analysis)
+export function scheduleImmediateNotifications(): void {
+  cron.schedule('5,20,35,50 * * * *', async () => {
+    try {
+      logger.info('Processing immediate notifications...');
+      await processImmediateNotifications();
+      logger.info('Immediate notifications processed');
+    } catch (error) {
+      logger.error('Immediate notifications failed:', error);
+    }
+  });
+
+  logger.info('[Scheduler] Immediate notifications scheduled: every 15 minutes');
+}
+
+// Run daily digest at 8 AM UTC
+export function scheduleDailyDigest(): void {
+  cron.schedule('0 8 * * *', async () => {
+    try {
+      logger.info('Processing daily digest...');
+      await processDailyDigest();
+      logger.info('Daily digest sent');
+    } catch (error) {
+      logger.error('Daily digest failed:', error);
+    }
+  });
+
+  logger.info('[Scheduler] Daily digest scheduled: 8 AM UTC');
+}
+
+// Run weekly digest on Mondays at 8 AM UTC
+export function scheduleWeeklyDigest(): void {
+  cron.schedule('0 8 * * 1', async () => {
+    try {
+      logger.info('Processing weekly digest...');
+      await processWeeklyDigest();
+      logger.info('Weekly digest sent');
+    } catch (error) {
+      logger.error('Weekly digest failed:', error);
+    }
+  });
+
+  logger.info('[Scheduler] Weekly digest scheduled: Monday 8 AM UTC');
+}
+
+// Generate AI summaries for crises every 20 minutes (offset from analysis)
+export function scheduleSummaryGeneration(): void {
+  cron.schedule('10,30,50 * * * *', async () => {
+    if (isSummaryGenerationRunning) {
+      logger.warn('Summary generation already running, skipping...');
+      return;
+    }
+
+    isSummaryGenerationRunning = true;
+    try {
+      logger.info('Scheduled summary generation starting...');
+      const stats = await generateMissingSummaries(5);
+      logger.info('Scheduled summary generation completed:', stats);
+    } catch (error) {
+      logger.error('Scheduled summary generation failed:', error);
+    } finally {
+      isSummaryGenerationRunning = false;
+    }
+  });
+
+  logger.info('[Scheduler] Summary generation scheduled: every 20 minutes');
 }
 
 // Initialize all scheduled jobs
@@ -85,9 +162,13 @@ export function initializeScheduledJobs(): void {
   
   scheduleDataIngestion();
   scheduleAIAnalysis();
+  scheduleSummaryGeneration();
   scheduleEarlyWarning();
+  scheduleImmediateNotifications();
+  scheduleDailyDigest();
+  scheduleWeeklyDigest();
 
-  logger.info('✅ All scheduled jobs initialized');
+  logger.info('[Scheduler] All scheduled jobs initialized');
 }
 
 // Get job status

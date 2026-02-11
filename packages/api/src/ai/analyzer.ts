@@ -19,6 +19,7 @@ function getGroqClient(): Groq {
 const MODEL = 'llama-3.3-70b-versatile';
 
 export interface AnalysisResult {
+  isRelevantCrisis: boolean; // True only for actual humanitarian crises or natural disasters
   crisisType: string;
   severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
   confidence: number;
@@ -34,11 +35,35 @@ export interface AnalysisResult {
 
 export async function analyzeContent(content: string): Promise<AnalysisResult> {
   try {
-    const prompt = `You are an expert humanitarian crisis analyst. Analyze the provided content and extract crisis-related information.
+    const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const prompt = `You are an expert humanitarian crisis analyst for AidWatch, an early warning system for NGOs and humanitarian responders.
+
+TODAY'S DATE: ${currentDate}
+
+IMPORTANT: AidWatch tracks ONLY ACTIVE, CURRENT emergencies happening NOW or in the past 7 days:
+- Natural disasters CURRENTLY HAPPENING (earthquakes, floods, hurricanes, wildfires, droughts, tsunamis, volcanic eruptions)
+- Active humanitarian crises (famines, refugee crises, mass displacement, disease outbreaks/epidemics)
+- Ongoing armed conflicts affecting civilian populations RIGHT NOW
+- Infrastructure failures causing immediate humanitarian emergencies
+
+ABSOLUTELY DO NOT classify as relevant (set isRelevantCrisis to FALSE):
+- ANY event that occurred more than 7 days ago (check dates mentioned in the content)
+- Crime news, court cases, trials, criminal investigations, shootings, murders, terrorism trials
+- Historical events, anniversaries of past disasters, memorials, commemorations
+- Articles discussing past disasters in retrospect (e.g., "2024 earthquake", "last year's flood")
+- General political news, elections, policy debates, legislation
+- Economic news, stock markets, business updates, company news
+- Sports, entertainment, celebrity news
+- Technology announcements, product launches
+- Routine government activities, diplomatic meetings
+- Opinion pieces, editorials, analysis articles
+- Weather forecasts (unless severe warning with imminent threat)
+- News about recovery, rebuilding, or aftermath of past events
           
 Return a JSON object with the following structure (no markdown, just pure JSON):
 {
-  "crisisType": "NATURAL_DISASTER|CONFLICT|DISEASE_OUTBREAK|FOOD_SECURITY|DISPLACEMENT|INFRASTRUCTURE|ECONOMIC|ENVIRONMENTAL|OTHER",
+  "isRelevantCrisis": true/false,
+  "crisisType": "NATURAL_DISASTER|CONFLICT|DISEASE_OUTBREAK|FOOD_SECURITY|DISPLACEMENT|INFRASTRUCTURE|OTHER",
   "severity": "CRITICAL|HIGH|MEDIUM|LOW|UNKNOWN",
   "confidence": 0.0-1.0,
   "summary": "Brief 2-3 sentence summary of the situation",
@@ -51,7 +76,9 @@ Return a JSON object with the following structure (no markdown, just pure JSON):
   "recommendations": ["actionable recommendations for responders"]
 }
 
-Analyze this content for humanitarian crisis indicators:
+Set isRelevantCrisis to TRUE only if this describes an actual humanitarian crisis, natural disaster, or emergency requiring humanitarian response. Set to FALSE for general news.
+
+Analyze this content:
 
 ${content}`;
 

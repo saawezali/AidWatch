@@ -28,7 +28,7 @@ async function generateSummariesForExistingCrises() {
     try {
       console.log('   🤖 Generating SITUATION summary...');
       const summary = await generateCrisisSummary(crisis.id, SummaryType.SITUATION);
-      console.log('   ✅ Summary generated!');
+      console.log('   [Done] Summary generated!');
       console.log(`   Preview: ${summary.content.substring(0, 200)}...`);
     } catch (error: any) {
       console.error(`   ❌ Failed: ${error.message}`);
