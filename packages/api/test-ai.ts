@@ -16,8 +16,8 @@ async function testAI() {
       'WHO warns of disease outbreak risk in temporary shelters. UN launches emergency appeal.'
     );
     console.log('[Test] Analysis result:', JSON.stringify(analysis, null, 2));
-  } catch (error: any) {
-    console.error('❌ Analysis failed:', error.message);
+  } catch (error: unknown) {
+    console.error('❌ Analysis failed:', error instanceof Error ? error.message : 'Unknown error');
   }
 
   // Test 2: Detect crisis signals
@@ -30,8 +30,8 @@ async function testAI() {
       'Armed conflict intensifies in Sudan',
     ]);
     console.log('[Test] Signals detected:', JSON.stringify(signals, null, 2));
-  } catch (error: any) {
-    console.error('❌ Signal detection failed:', error.message);
+  } catch (error: unknown) {
+    console.error('❌ Signal detection failed:', error instanceof Error ? error.message : 'Unknown error');
   }
 
   // Test 3: Generate summary for a crisis
@@ -47,8 +47,8 @@ async function testAI() {
       'SITUATION'
     );
     console.log('[Test] Summary generated:', summary);
-  } catch (error: any) {
-    console.error('❌ Summary generation failed:', error.message);
+  } catch (error: unknown) {
+    console.error('❌ Summary generation failed:', error instanceof Error ? error.message : 'Unknown error');
   }
 
   // Check existing crises in DB

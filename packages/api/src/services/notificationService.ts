@@ -40,6 +40,7 @@ export async function processImmediateNotifications(): Promise<void> {
 
     // Find all active subscribers with IMMEDIATE frequency
     // Note: alertSubscription model available after prisma generate
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const immediateSubscribers = await (prisma as any).alertSubscription.findMany({
       where: {
         isActive: true,
@@ -50,6 +51,7 @@ export async function processImmediateNotifications(): Promise<void> {
 
     for (const crisis of recentCrises) {
       // Find matching subscribers
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const matchingSubscribers = immediateSubscribers.filter((sub: any) => {
         // Check region match (region can be null)
         const crisisRegion = crisis.region || '';
@@ -74,6 +76,7 @@ export async function processImmediateNotifications(): Promise<void> {
 
       for (const subscriber of matchingSubscribers) {
         // Check if we already sent this notification
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const existingNotification = await (prisma as any).sentNotification.findFirst({
           where: {
             subscriptionId: subscriber.id,
@@ -86,6 +89,7 @@ export async function processImmediateNotifications(): Promise<void> {
         }
 
         // Create pending notification record
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const notification = await (prisma as any).sentNotification.create({
           data: {
             subscriptionId: subscriber.id,
@@ -113,6 +117,7 @@ export async function processImmediateNotifications(): Promise<void> {
           );
 
           // Mark as sent
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (prisma as any).sentNotification.update({
             where: { id: notification.id },
             data: {
@@ -124,6 +129,7 @@ export async function processImmediateNotifications(): Promise<void> {
           logger.info(`Sent crisis alert to ${subscriber.email} for crisis ${crisis.id}`);
         } catch (error) {
           // Mark as failed
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (prisma as any).sentNotification.update({
             where: { id: notification.id },
             data: { status: 'FAILED' },
@@ -160,6 +166,7 @@ export async function processDailyDigest(): Promise<void> {
     }
 
     // Find all active subscribers with DAILY frequency
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const dailySubscribers = await (prisma as any).alertSubscription.findMany({
       where: {
         isActive: true,
@@ -243,6 +250,7 @@ export async function processWeeklyDigest(): Promise<void> {
     }
 
     // Find all active subscribers with WEEKLY frequency
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const weeklySubscribers = await (prisma as any).alertSubscription.findMany({
       where: {
         isActive: true,

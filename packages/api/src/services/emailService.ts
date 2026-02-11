@@ -139,7 +139,7 @@ class EmailService {
     email: string,
     crisis: CrisisAlertData,
     unsubscribeToken: string,
-    subscriberName?: string
+    _subscriberName?: string
   ): Promise<boolean> {
     const crisisUrl = `${this.appUrl}/crises/${crisis.crisisId}`;
     const unsubscribeUrl = `${this.appUrl}/unsubscribe?token=${unsubscribeToken}`;

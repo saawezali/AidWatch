@@ -100,7 +100,7 @@ export default function Subscribe() {
       setSubmitted(true);
       setError(null);
     },
-    onError: (err: any) => {
+    onError: (err: Error & { response?: { data?: { error?: string } } }) => {
       setError(err.response?.data?.error || 'Failed to subscribe. Please try again.');
     },
   });
@@ -401,7 +401,7 @@ export default function Subscribe() {
                         name="frequency"
                         value={option.value}
                         checked={frequency === option.value}
-                        onChange={(e) => setFrequency(e.target.value as any)}
+                        onChange={(e) => setFrequency(e.target.value as 'IMMEDIATE' | 'DAILY' | 'WEEKLY')}
                         className="mt-0.5"
                       />
                       <div>

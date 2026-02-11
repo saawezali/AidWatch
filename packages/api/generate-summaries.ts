@@ -30,8 +30,8 @@ async function generateSummariesForExistingCrises() {
       const summary = await generateCrisisSummary(crisis.id, SummaryType.SITUATION);
       console.log('   [Done] Summary generated!');
       console.log(`   Preview: ${summary.content.substring(0, 200)}...`);
-    } catch (error: any) {
-      console.error(`   ❌ Failed: ${error.message}`);
+    } catch (error: unknown) {
+      console.error(`   ❌ Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 
     // Small delay between API calls

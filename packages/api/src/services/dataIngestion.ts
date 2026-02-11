@@ -552,8 +552,7 @@ export async function fetchGDACS(): Promise<void> {
       });
 
       if (!existing && props.name) {
-        // Map GDACS alert level to our severity
-        const alertLevel = props.alertlevel?.toLowerCase();
+        // Map GDACS alert level to our severity (alertlevel available in props)
         
         await prisma.event.create({
           data: {

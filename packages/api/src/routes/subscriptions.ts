@@ -7,8 +7,7 @@ import { prisma } from '../lib/prisma';
 const router = Router();
 
 // NotificationFreq enum values (defined in schema, may not be in client until regenerated)
-const NOTIFICATION_FREQ = ['IMMEDIATE', 'DAILY', 'WEEKLY'] as const;
-type NotificationFreq = typeof NOTIFICATION_FREQ[number];
+type NotificationFreq = 'IMMEDIATE' | 'DAILY' | 'WEEKLY';
 
 // List of valid regions (countries and major regions)
 const VALID_REGIONS = [
@@ -98,6 +97,7 @@ router.post('/', async (req: Request, res: Response) => {
       : validCrisisTypes;
 
     // Use prisma as any until Prisma client is regenerated with new models
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const alertSub = (prisma as any);
 
     // Check for existing subscription
@@ -171,6 +171,7 @@ router.post('/', async (req: Request, res: Response) => {
 router.get('/verify/:token', async (req: Request, res: Response) => {
   try {
     const { token } = req.params;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const alertSub = (prisma as any);
 
     const subscription = await alertSub.alertSubscription.findUnique({
@@ -206,6 +207,7 @@ router.get('/verify/:token', async (req: Request, res: Response) => {
 router.get('/manage/:token', async (req: Request, res: Response) => {
   try {
     const { token } = req.params;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const alertSub = (prisma as any);
 
     const subscription = await alertSub.alertSubscription.findUnique({
@@ -249,6 +251,7 @@ router.put('/manage/:token', async (req: Request, res: Response) => {
   try {
     const { token } = req.params;
     const { name, regions, crisisTypes, minSeverity, frequency, isActive } = req.body;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const alertSub = (prisma as any);
 
     const subscription = await alertSub.alertSubscription.findUnique({
@@ -303,6 +306,7 @@ router.put('/manage/:token', async (req: Request, res: Response) => {
 router.delete('/unsubscribe/:token', async (req: Request, res: Response) => {
   try {
     const { token } = req.params;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const alertSub = (prisma as any);
 
     const subscription = await alertSub.alertSubscription.findUnique({
@@ -332,6 +336,7 @@ router.delete('/unsubscribe/:token', async (req: Request, res: Response) => {
 router.post('/resubscribe/:token', async (req: Request, res: Response) => {
   try {
     const { token } = req.params;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const alertSub = (prisma as any);
 
     const subscription = await alertSub.alertSubscription.findUnique({
