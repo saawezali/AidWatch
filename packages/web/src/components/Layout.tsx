@@ -1,6 +1,8 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import Squares from './Squares';
 import StaggeredMenu from './StaggeredMenu';
+import DemoBanner from './DemoBanner';
+import ThemeToggle from './ThemeToggle';
 
 const menuItems = [
   { label: 'Dashboard', ariaLabel: 'Go to dashboard', link: '/' },
@@ -21,7 +23,15 @@ export default function Layout() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-blue-50/30">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-blue-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/30">
+      {/* Demo Banner */}
+      <DemoBanner />
+      
+      {/* Theme Toggle - Fixed position */}
+      <div className="fixed top-4 left-4 z-50">
+        <ThemeToggle className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-sm" />
+      </div>
+      
       {/* Staggered Menu */}
       <StaggeredMenu
         position="right"
@@ -59,8 +69,8 @@ export default function Layout() {
         </main>
 
         {/* Footer */}
-        <footer className="px-6 py-4 border-t border-slate-200 bg-white/50 relative z-10 backdrop-blur-sm">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-slate-500">
+        <footer className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 relative z-10 backdrop-blur-sm">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-slate-500 dark:text-slate-400">
             <p>© 2026 AidWatch. Humanitarian Crisis Monitoring.</p>
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5">

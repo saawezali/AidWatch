@@ -17,6 +17,11 @@ let isIngestionRunning = false;
 let isAnalysisRunning = false;
 let isSummaryGenerationRunning = false;
 
+// Configuration from environment
+const ENABLE_EMAIL_NOTIFICATIONS = process.env.ENABLE_EMAIL_NOTIFICATIONS === 'true';
+const AI_ANALYSIS_INTERVAL = parseInt(process.env.AI_ANALYSIS_INTERVAL_MINUTES || '30', 10);
+const AI_BATCH_SIZE = parseInt(process.env.AI_BATCH_SIZE || '5', 10);
+
 // Run data ingestion every 30 minutes
 export function scheduleDataIngestion(): void {
   cron.schedule('*/30 * * * *', async () => {
@@ -41,9 +46,9 @@ export function scheduleDataIngestion(): void {
   logger.info('[Scheduler] Data ingestion scheduled: every 30 minutes');
 }
 
-// Run AI analysis every 15 minutes
+// Run AI analysis at configurable interval (default: every 30 minutes)
 export function scheduleAIAnalysis(): void {
-  cron.schedule('*/15 * * * *', async () => {
+  cron.schedule(`*/${AI_ANALYSIS_INTERVAL} * * * *`, async () => {
     if (isAnalysisRunning) {
       logger.warn('AI analysis already running, skipping...');
       return;
@@ -52,7 +57,7 @@ export function scheduleAIAnalysis(): void {
     isAnalysisRunning = true;
     try {
       logger.info('Scheduled AI analysis starting...');
-      const stats = await processUnanalyzedEvents(10);
+      const stats = await processUnanalyzedEvents(AI_BATCH_SIZE);
       logger.info('Scheduled AI analysis completed:', stats);
     } catch (error) {
       logger.error('Scheduled AI analysis failed:', error);
@@ -61,7 +66,7 @@ export function scheduleAIAnalysis(): void {
     }
   });
 
-  logger.info('[Scheduler] AI analysis scheduled: every 15 minutes');
+  logger.info(`[Scheduler] AI analysis scheduled: every ${AI_ANALYSIS_INTERVAL} minutes (batch size: ${AI_BATCH_SIZE})`);
 }
 
 // Run early warning detection every hour
@@ -78,8 +83,10 @@ export function scheduleEarlyWarning(): void {
         });
       }
       
-      // Process immediate notifications after analysis
-      await processImmediateNotifications();
+      // Process immediate notifications after analysis (only if email enabled)
+      if (ENABLE_EMAIL_NOTIFICATIONS) {
+        await processImmediateNotifications();
+      }
     } catch (error) {
       logger.error('Early warning detection failed:', error);
     }
@@ -88,8 +95,13 @@ export function scheduleEarlyWarning(): void {
   logger.info('[Scheduler] Early warning detection scheduled: every hour');
 }
 
-// Run immediate notifications every 15 minutes (after AI analysis)
+// Run immediate notifications every 15 minutes (only if email enabled)
 export function scheduleImmediateNotifications(): void {
+  if (!ENABLE_EMAIL_NOTIFICATIONS) {
+    logger.info('[Scheduler] Email notifications disabled - skipping immediate notifications scheduler');
+    return;
+  }
+
   cron.schedule('5,20,35,50 * * * *', async () => {
     try {
       logger.info('Processing immediate notifications...');
@@ -103,8 +115,13 @@ export function scheduleImmediateNotifications(): void {
   logger.info('[Scheduler] Immediate notifications scheduled: every 15 minutes');
 }
 
-// Run daily digest at 8 AM UTC
+// Run daily digest at 8 AM UTC (only if email enabled)
 export function scheduleDailyDigest(): void {
+  if (!ENABLE_EMAIL_NOTIFICATIONS) {
+    logger.info('[Scheduler] Email notifications disabled - skipping daily digest scheduler');
+    return;
+  }
+
   cron.schedule('0 8 * * *', async () => {
     try {
       logger.info('Processing daily digest...');
@@ -118,8 +135,13 @@ export function scheduleDailyDigest(): void {
   logger.info('[Scheduler] Daily digest scheduled: 8 AM UTC');
 }
 
-// Run weekly digest on Mondays at 8 AM UTC
+// Run weekly digest on Mondays at 8 AM UTC (only if email enabled)
 export function scheduleWeeklyDigest(): void {
+  if (!ENABLE_EMAIL_NOTIFICATIONS) {
+    logger.info('[Scheduler] Email notifications disabled - skipping weekly digest scheduler');
+    return;
+  }
+
   cron.schedule('0 8 * * 1', async () => {
     try {
       logger.info('Processing weekly digest...');
@@ -133,9 +155,9 @@ export function scheduleWeeklyDigest(): void {
   logger.info('[Scheduler] Weekly digest scheduled: Monday 8 AM UTC');
 }
 
-// Generate AI summaries for crises every 20 minutes (offset from analysis)
+// Generate AI summaries for crises every 30 minutes (offset from analysis)
 export function scheduleSummaryGeneration(): void {
-  cron.schedule('10,30,50 * * * *', async () => {
+  cron.schedule('15,45 * * * *', async () => {
     if (isSummaryGenerationRunning) {
       logger.warn('Summary generation already running, skipping...');
       return;
@@ -144,7 +166,7 @@ export function scheduleSummaryGeneration(): void {
     isSummaryGenerationRunning = true;
     try {
       logger.info('Scheduled summary generation starting...');
-      const stats = await generateMissingSummaries(5);
+      const stats = await generateMissingSummaries(Math.max(3, Math.floor(AI_BATCH_SIZE / 2)));
       logger.info('Scheduled summary generation completed:', stats);
     } catch (error) {
       logger.error('Scheduled summary generation failed:', error);
@@ -153,7 +175,7 @@ export function scheduleSummaryGeneration(): void {
     }
   });
 
-  logger.info('[Scheduler] Summary generation scheduled: every 20 minutes');
+  logger.info('[Scheduler] Summary generation scheduled: every 30 minutes');
 }
 
 // Initialize all scheduled jobs
@@ -202,7 +224,7 @@ export async function triggerDataIngestion(): Promise<Awaited<ReturnType<typeof 
   }
 }
 
-export async function triggerAIAnalysis(batchSize: number = 10): Promise<Awaited<ReturnType<typeof processUnanalyzedEvents>>> {
+export async function triggerAIAnalysis(batchSize: number = AI_BATCH_SIZE): Promise<Awaited<ReturnType<typeof processUnanalyzedEvents>>> {
   if (isAnalysisRunning) {
     throw new Error('AI analysis already running');
   }

@@ -4,6 +4,21 @@ import { logger } from '../lib/logger';
 // Lazy initialization to ensure env vars are loaded
 let groqClient: Groq | null = null;
 
+// Rate limiting for Groq free tier (30 req/min, 14,400 req/day)
+const AI_DELAY_BETWEEN_CALLS = parseInt(process.env.AI_DELAY_BETWEEN_CALLS_MS || '2000', 10);
+let lastApiCallTime = 0;
+
+async function rateLimitedDelay(): Promise<void> {
+  const now = Date.now();
+  const timeSinceLastCall = now - lastApiCallTime;
+  if (timeSinceLastCall < AI_DELAY_BETWEEN_CALLS) {
+    const waitTime = AI_DELAY_BETWEEN_CALLS - timeSinceLastCall;
+    logger.debug(`Rate limiting: waiting ${waitTime}ms before next Groq API call`);
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+  lastApiCallTime = Date.now();
+}
+
 function getGroqClient(): Groq {
   if (!groqClient) {
     const apiKey = process.env.GROQ_API_KEY;
@@ -82,6 +97,9 @@ Analyze this content:
 
 ${content}`;
 
+    // Apply rate limiting delay
+    await rateLimitedDelay();
+
     const chatCompletion = await getGroqClient().chat.completions.create({
       messages: [
         {
@@ -133,6 +151,9 @@ ${prompts[type]}
 Based on these events:
 ${events.map((e, i) => `${i + 1}. [${e.source}] ${e.title}: ${e.description}`).join('\n')}`;
 
+    // Apply rate limiting delay
+    await rateLimitedDelay();
+
     const chatCompletion = await getGroqClient().chat.completions.create({
       messages: [
         {
@@ -167,6 +188,9 @@ Analyze headlines for crisis signals. Return only valid JSON (no markdown):
 Analyze these headlines for emerging crisis signals:
 
 ${headlines.join('\n')}`;
+
+    // Apply rate limiting delay
+    await rateLimitedDelay();
 
     const chatCompletion = await getGroqClient().chat.completions.create({
       messages: [

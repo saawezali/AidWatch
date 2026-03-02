@@ -8,6 +8,13 @@
   font-weight: 400;
   color: #213547;
   background-color: #f8fafc;
+  color-scheme: light;
+}
+
+.dark {
+  color: #e2e8f0;
+  background-color: #0f172a;
+  color-scheme: dark;
 }
 
 body {
@@ -25,13 +32,25 @@ body {
   background: #f1f5f9;
 }
 
+.dark ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 4px;
 }
 
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }
 
 /* Leaflet map fixes */

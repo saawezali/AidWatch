@@ -1,10 +1,12 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, MapPin, Clock, ExternalLink, Activity, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Activity, AlertTriangle } from 'lucide-react';
 import { crisisApi } from '../lib/api';
 import { formatDistanceToNow, format } from 'date-fns';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
+import CrisisTimeline from '../components/CrisisTimeline';
+import ConfidenceScore from '../components/ConfidenceScore';
 
 const severityColors = {
   CRITICAL: 'bg-red-100 text-red-800 border-red-200',
@@ -58,17 +60,17 @@ export default function CrisisDetail() {
       {/* Back link */}
       <Link
         to="/crises"
-        className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900"
+        className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to crises
       </Link>
 
       {/* Header */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">{crisis.title}</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">{crisis.title}</h1>
             <div className="flex items-center gap-3">
               <span
                 className={clsx(
@@ -88,17 +90,15 @@ export default function CrisisDetail() {
               </span>
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-sm text-slate-500">AI Confidence</div>
-            <div className="text-2xl font-bold text-slate-900">
-              {Math.round(crisis.confidence * 100)}%
-            </div>
+          <div className="text-right min-w-[120px]">
+            <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">AI Confidence</div>
+            <ConfidenceScore score={crisis.confidence} size="md" />
           </div>
         </div>
 
-        <p className="text-slate-600 mb-4">{crisis.description}</p>
+        <p className="text-slate-600 dark:text-slate-300 mb-4">{crisis.description}</p>
 
-        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
+        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
           <span className="flex items-center gap-1">
             <MapPin className="h-4 w-4" />
             {[crisis.location, crisis.region, crisis.country].filter(Boolean).join(', ') || 'Unknown location'}
@@ -118,7 +118,7 @@ export default function CrisisDetail() {
             {crisis.tags.map((tag: string) => (
               <span
                 key={tag}
-                className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-full"
+                className="px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs rounded-full"
               >
                 #{tag}
               </span>
@@ -128,52 +128,17 @@ export default function CrisisDetail() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Events */}
-        <div className="bg-white rounded-xl border border-slate-200">
-          <div className="p-4 border-b border-slate-200">
-            <h2 className="font-semibold text-slate-900">Recent Events</h2>
-          </div>
-          <div className="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
-            {crisis.events?.length === 0 ? (
-              <div className="p-6 text-center text-slate-500">No events tracked yet</div>
-            ) : (
-              crisis.events?.map((event: {
-                id: string;
-                title: string;
-                source: string;
-                sourceType: string;
-                publishedAt: string;
-              }) => (
-                <div key={event.id} className="p-4">
-                  <h3 className="font-medium text-slate-900 mb-1">{event.title}</h3>
-                  <div className="flex items-center gap-3 text-sm text-slate-500">
-                    <span className="px-2 py-0.5 bg-slate-100 rounded text-xs">
-                      {event.sourceType}
-                    </span>
-                    <span>{format(new Date(event.publishedAt), 'MMM d, yyyy')}</span>
-                    <a
-                      href={event.source}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-primary-600 hover:underline"
-                    >
-                      Source <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+        {/* Crisis Timeline */}
+        <CrisisTimeline crisisId={id!} maxDays={14} />
 
         {/* AI Summaries */}
-        <div className="bg-white rounded-xl border border-slate-200">
-          <div className="p-4 border-b border-slate-200">
-            <h2 className="font-semibold text-slate-900">AI Summaries</h2>
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+          <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+            <h2 className="font-semibold text-slate-900 dark:text-slate-100">AI Summaries</h2>
           </div>
-          <div className="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
+          <div className="divide-y divide-slate-100 dark:divide-slate-700 max-h-[500px] overflow-y-auto">
             {crisis.summaries?.length === 0 ? (
-              <div className="p-6 text-center text-slate-500">
+              <div className="p-6 text-center text-slate-500 dark:text-slate-400">
                 No AI summaries generated yet
               </div>
             ) : (
@@ -185,14 +150,14 @@ export default function CrisisDetail() {
               }) => (
                 <div key={summary.id} className="p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-medium rounded">
+                    <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-medium rounded">
                       {summary.type}
                     </span>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
                       {format(new Date(summary.createdAt), 'MMM d, yyyy HH:mm')}
                     </span>
                   </div>
-                  <div className="text-sm text-slate-600 prose prose-sm prose-slate max-w-none">
+                  <div className="text-sm text-slate-600 dark:text-slate-300 prose prose-sm prose-slate dark:prose-invert max-w-none">
                     <ReactMarkdown>{summary.content}</ReactMarkdown>
                   </div>
                 </div>

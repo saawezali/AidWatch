@@ -204,4 +204,138 @@ router.patch(
   })
 );
 
+// Get historical trends
+router.get(
+  '/stats/trends',
+  asyncHandler(async (req: Request, res: Response) => {
+    const days = Math.min(parseInt(req.query.days as string) || 30, 90);
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    startDate.setHours(0, 0, 0, 0);
+
+    // Get all crises in the date range
+    const crises = await prisma.crisis.findMany({
+      where: {
+        detectedAt: { gte: startDate },
+      },
+      select: {
+        detectedAt: true,
+        type: true,
+        severity: true,
+      },
+      orderBy: { detectedAt: 'asc' },
+    });
+
+    // Group by date
+    const trendMap = new Map<string, { 
+      total: number; 
+      byType: Record<string, number>; 
+      bySeverity: Record<string, number>;
+    }>();
+
+    // Initialize all dates in range
+    for (let i = 0; i <= days; i++) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + i);
+      const dateKey = date.toISOString().split('T')[0];
+      trendMap.set(dateKey, { 
+        total: 0, 
+        byType: {}, 
+        bySeverity: {} 
+      });
+    }
+
+    // Populate with actual data
+    crises.forEach(crisis => {
+      const dateKey = crisis.detectedAt.toISOString().split('T')[0];
+      const dayData = trendMap.get(dateKey);
+      
+      if (dayData) {
+        dayData.total += 1;
+        dayData.byType[crisis.type] = (dayData.byType[crisis.type] || 0) + 1;
+        dayData.bySeverity[crisis.severity] = (dayData.bySeverity[crisis.severity] || 0) + 1;
+      }
+    });
+
+    const trends = Array.from(trendMap.entries()).map(([date, data]) => ({
+      date,
+      ...data,
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        days,
+        startDate: startDate.toISOString(),
+        trends,
+        summary: {
+          totalCrises: crises.length,
+          avgPerDay: (crises.length / days).toFixed(2),
+        },
+      },
+    });
+  })
+);
+
+// Get crisis timeline (events over time)
+router.get(
+  '/:id/timeline',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const crisis = await prisma.crisis.findUnique({
+      where: { id },
+      select: { id: true, title: true, detectedAt: true },
+    });
+
+    if (!crisis) {
+      throw new AppError('Crisis not found', 404);
+    }
+
+    const events = await prisma.event.findMany({
+      where: { crisisId: id },
+      orderBy: { publishedAt: 'asc' },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        publishedAt: true,
+        source: true,
+        sourceType: true,
+      },
+    });
+
+    // Group events by date
+    const timelineMap = new Map<string, typeof events>();
+    
+    events.forEach(event => {
+      const dateKey = event.publishedAt.toISOString().split('T')[0];
+      const existing = timelineMap.get(dateKey) || [];
+      existing.push(event);
+      timelineMap.set(dateKey, existing);
+    });
+
+    const timeline = Array.from(timelineMap.entries())
+      .map(([date, dayEvents]) => ({
+        date,
+        eventCount: dayEvents.length,
+        events: dayEvents,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    res.json({
+      success: true,
+      data: {
+        crisis: {
+          id: crisis.id,
+          title: crisis.title,
+          startDate: crisis.detectedAt,
+        },
+        timeline,
+        totalEvents: events.length,
+      },
+    });
+  })
+);
+
 export default router;

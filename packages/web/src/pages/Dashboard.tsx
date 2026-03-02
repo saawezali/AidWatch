@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { crisisApi } from '../lib/api';
 import clsx from 'clsx';
+import HistoricalTrends from '../components/HistoricalTrends';
 
 const severityColors = {
   CRITICAL: 'bg-red-100 text-red-800 border-red-200',
@@ -54,7 +55,7 @@ function AnimatedNumber({ value, isLoading }: { value: number; isLoading: boolea
 // Loading skeleton for cards
 function CardSkeleton() {
   return (
-    <div className="bg-white rounded-2xl p-6 border border-slate-200">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <div className="w-24 h-4 skeleton rounded" />
@@ -136,23 +137,23 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Combined Status Bar */}
-      <div className="mt-12 bg-gradient-to-r from-primary-500/10 via-primary-500/5 to-transparent border border-primary-200/50 rounded-xl px-4 py-3 flex items-center justify-between flex-wrap gap-3">
+      <div className="mt-12 bg-gradient-to-r from-primary-500/10 via-primary-500/5 to-transparent dark:from-primary-500/20 dark:via-primary-500/10 dark:to-transparent border border-primary-200/50 dark:border-primary-700/50 rounded-xl px-4 py-3 flex items-center justify-between flex-wrap gap-3">
         {/* Left: System Status */}
         <div className="flex items-center gap-2">
           <div className="relative">
             <Radio className="h-4 w-4 text-green-500" />
             <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
           </div>
-          <span className="text-green-600 font-medium text-sm">System Active</span>
-          <span className="text-slate-300 mx-1">|</span>
+          <span className="text-green-600 dark:text-green-400 font-medium text-sm">System Active</span>
+          <span className="text-slate-300 dark:text-slate-600 mx-1">|</span>
           <Globe className="h-4 w-4 text-primary-500" />
-          <span className="text-slate-700 text-sm">
-            Monitoring <span className="font-semibold text-primary-600">{stats?.data?.total || 0}</span> active situations
+          <span className="text-slate-700 dark:text-slate-300 text-sm">
+            Monitoring <span className="font-semibold text-primary-600 dark:text-primary-400">{stats?.data?.total || 0}</span> active situations
           </span>
         </div>
 
         {/* Right: Last Updated */}
-        <div className="flex items-center gap-2 text-sm text-slate-500">
+        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
           <Clock className="h-4 w-4" />
           <span>Updated {new Date().toLocaleTimeString()}</span>
         </div>
@@ -172,24 +173,24 @@ export default function Dashboard() {
             <div 
               key={stat.title} 
               className={clsx(
-                'stat-card bg-white rounded-2xl p-6 border border-slate-200 card-hover cursor-default',
+                'stat-card bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 card-hover cursor-default',
                 `animate-fade-in-up stagger-${index + 1}`
               )}
               style={{ opacity: 0 }}
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-500">{stat.title}</p>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{stat.title}</p>
                   <div className="flex items-baseline gap-1 mt-2">
-                    <span className="text-3xl font-bold text-slate-900 number-counter">
+                    <span className="text-3xl font-bold text-slate-900 dark:text-slate-100 number-counter">
                       <AnimatedNumber value={stat.value} isLoading={statsLoading} />
                     </span>
                     {stat.suffix && (
-                      <span className="text-xl font-semibold text-slate-500">{stat.suffix}</span>
+                      <span className="text-xl font-semibold text-slate-500 dark:text-slate-400">{stat.suffix}</span>
                     )}
                   </div>
                   {stat.trend && (
-                    <p className="text-xs text-emerald-600 mt-2 flex items-center gap-1">
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-2 flex items-center gap-1">
                       <TrendingUp className="h-3 w-3" />
                       {stat.trend}
                     </p>
@@ -217,23 +218,23 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Priority Crises */}
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden animate-fade-in-up stagger-3" style={{ opacity: 0 }}>
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden animate-fade-in-up stagger-3" style={{ opacity: 0 }}>
+          <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-gradient-to-r from-slate-50 dark:from-slate-700/50 to-white dark:to-slate-800">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-red-100 rounded-lg">
-                <AlertCircle className="h-4 w-4 text-red-600" />
+              <div className="p-1.5 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
               </div>
-              <h2 className="font-semibold text-slate-900">Priority Crises</h2>
+              <h2 className="font-semibold text-slate-900 dark:text-slate-100">Priority Crises</h2>
             </div>
             <Link 
               to="/crises" 
-              className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1 group"
+              className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center gap-1 group"
             >
               View all 
               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 dark:divide-slate-700">
             {crisesLoading ? (
               <>
                 <ListItemSkeleton />
@@ -242,11 +243,11 @@ export default function Dashboard() {
               </>
             ) : crises?.data?.length === 0 ? (
               <div className="p-12 text-center">
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Shield className="h-8 w-8 text-slate-400" />
+                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Shield className="h-8 w-8 text-slate-400 dark:text-slate-500" />
                 </div>
-                <p className="text-slate-500 font-medium">No active crises</p>
-                <p className="text-sm text-slate-400 mt-1">All systems are stable</p>
+                <p className="text-slate-500 dark:text-slate-400 font-medium">No active crises</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">All systems are stable</p>
               </div>
             ) : (
               crises?.data?.map((crisis: {
@@ -260,7 +261,7 @@ export default function Dashboard() {
                 <Link
                   key={crisis.id}
                   to={`/crises/${crisis.id}`}
-                  className="list-item-interactive block p-4 hover:bg-gradient-to-r hover:from-slate-50 hover:to-white transition-all duration-200 group"
+                  className="list-item-interactive block p-4 hover:bg-gradient-to-r hover:from-slate-50 dark:hover:from-slate-700/50 hover:to-white dark:hover:to-slate-800 transition-all duration-200 group"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -271,11 +272,11 @@ export default function Dashboard() {
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
                           </span>
                         )}
-                        <h3 className="font-medium text-slate-900 truncate group-hover:text-primary-600 transition-colors">
+                        <h3 className="font-medium text-slate-900 dark:text-slate-100 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                           {crisis.title}
                         </h3>
                       </div>
-                      <p className="text-sm text-slate-500 mt-1">
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                         {crisis.location || crisis.country || 'Unknown location'}
                       </p>
                     </div>
@@ -305,13 +306,13 @@ export default function Dashboard() {
         </div>
 
         {/* Crisis by Type */}
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden animate-fade-in-up stagger-4" style={{ opacity: 0 }}>
-          <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden animate-fade-in-up stagger-4" style={{ opacity: 0 }}>
+          <div className="p-4 border-b border-slate-100 dark:border-slate-700 bg-gradient-to-r from-slate-50 dark:from-slate-700/50 to-white dark:to-slate-800">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-primary-100 rounded-lg">
-                <Activity className="h-4 w-4 text-primary-600" />
+              <div className="p-1.5 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                <Activity className="h-4 w-4 text-primary-600 dark:text-primary-400" />
               </div>
-              <h2 className="font-semibold text-slate-900">Crisis Distribution</h2>
+              <h2 className="font-semibold text-slate-900 dark:text-slate-100">Crisis Distribution</h2>
             </div>
           </div>
           <div className="p-5">
@@ -329,8 +330,8 @@ export default function Dashboard() {
               </div>
             ) : Object.keys(stats?.data?.byType || {}).length === 0 ? (
               <div className="p-8 text-center">
-                <Activity className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                <p className="text-slate-500">No data available</p>
+                <Activity className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                <p className="text-slate-500 dark:text-slate-400">No data available</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -348,10 +349,10 @@ export default function Dashboard() {
                   return (
                     <div key={type} className="group">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors">
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors">
                           {type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
                         </span>
-                        <span className="text-sm font-bold text-slate-900 tabular-nums">
+                        <span className="text-sm font-bold text-slate-900 dark:text-slate-100 tabular-nums">
                           {count as number}
                         </span>
                       </div>
@@ -375,28 +376,31 @@ export default function Dashboard() {
           </div>
           
           {/* Quick stats at bottom */}
-          <div className="p-4 bg-slate-50 border-t border-slate-100 grid grid-cols-3 gap-4">
+          <div className="p-4 bg-slate-50 dark:bg-slate-700/30 border-t border-slate-100 dark:border-slate-700 grid grid-cols-3 gap-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-slate-900">
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
                 {stats?.data?.byStatus?.ONGOING || 0}
               </p>
-              <p className="text-xs text-slate-500">Ongoing</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Ongoing</p>
             </div>
-            <div className="text-center border-x border-slate-200">
-              <p className="text-2xl font-bold text-slate-900">
+            <div className="text-center border-x border-slate-200 dark:border-slate-600">
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
                 {stats?.data?.byStatus?.EMERGING || 0}
               </p>
-              <p className="text-xs text-slate-500">Emerging</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Emerging</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-slate-900">
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
                 {stats?.data?.byStatus?.STABILIZING || 0}
               </p>
-              <p className="text-xs text-slate-500">Stabilizing</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Stabilizing</p>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Historical Trends Chart */}
+      <HistoricalTrends days={30} />
     </div>
   );
 }
