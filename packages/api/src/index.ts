@@ -79,6 +79,17 @@ app.use(cookieParser());
 // Demo mode check - adds isDemo flag to requests
 app.use('/api/', checkDemoMode);
 
+// Root route - API info
+app.get('/', (req, res) => {
+  res.json({
+    name: 'AidWatch API',
+    version: '1.0.0',
+    status: 'running',
+    docs: '/api/docs',
+    health: '/api/health',
+  });
+});
+
 // Swagger Documentation
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
