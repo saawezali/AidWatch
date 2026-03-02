@@ -23,10 +23,23 @@ Deploy AidWatch for free using **Vercel** (frontend), **Render** (API), and **Su
    - **Region:** Choose closest to your users
 4. Wait for project to be created (~2 minutes)
 5. Go to **Settings** → **Database** → **Connection string**
-6. Copy the **URI** under "Transaction" pooler (looks like):
+6. You need **TWO** connection strings:
+
+   **DATABASE_URL** (for runtime queries):
+   - Click the **"Transaction"** tab
+   - Copy the URI (port 6543, includes `?pgbouncer=true`):
    ```
    postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres?pgbouncer=true
    ```
+
+   **DIRECT_URL** (for migrations):
+   - Click the **"Session"** tab  
+   - Copy the URI (port 5432, NO pgbouncer):
+   ```
+   postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:5432/postgres
+   ```
+
+7. Replace `[password]` with your actual database password in both strings
 
 ---
 
@@ -40,10 +53,13 @@ Deploy AidWatch for free using **Vercel** (frontend), **Render** (API), and **Su
 4. Connect your GitHub repo
 5. Render will detect `render.yaml` and set up the service
 6. Configure environment variables:
-   - `DATABASE_URL`: Your Supabase connection string from Step 1
+   - `DATABASE_URL`: Transaction pooler URI from Supabase (port 6543)
+   - `DIRECT_URL`: Session/Direct URI from Supabase (port 5432)
    - `GROQ_API_KEY`: From [Groq Console](https://console.groq.com/keys)
    - `NEWS_API_KEY`: From [NewsAPI](https://newsapi.org/account)
    - `ADMIN_API_KEY`: Generate with `openssl rand -hex 32`
+   - `JWT_ACCESS_SECRET`: Generate with `openssl rand -hex 64`
+   - `JWT_REFRESH_SECRET`: Generate with `openssl rand -hex 64`
    - `APP_URL`: Leave empty for now (update after Vercel deploy)
 
 ### Option B: Manual Setup
@@ -118,7 +134,8 @@ npx prisma migrate deploy
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `DATABASE_URL` | ✅ | Supabase PostgreSQL connection string |
+| `DATABASE_URL` | ✅ | Supabase Transaction pooler (port 6543, with `?pgbouncer=true`) |
+| `DIRECT_URL` | ✅ | Supabase Session/Direct connection (port 5432) - for migrations |
 | `GROQ_API_KEY` | ✅ | Groq API key for AI analysis |
 | `NEWS_API_KEY` | ✅ | NewsAPI key for data ingestion |
 | `ADMIN_API_KEY` | ✅ | Admin authentication key |
@@ -177,8 +194,13 @@ openssl rand -hex 64
 - Consider upgrading to paid tier ($7/month) for always-on
 
 ### Database Connection Errors
-- Ensure you're using the **Transaction pooler** connection string from Supabase
-- Add `?pgbouncer=true` to connection string if not present
+- Ensure `DATABASE_URL` uses the **Transaction pooler** (port 6543, with `?pgbouncer=true`)
+- Ensure `DIRECT_URL` uses the **Session** connection (port 5432, NO pgbouncer)
+- Both URLs should use the same password
+
+### Migration Errors
+- Migrations require `DIRECT_URL` (not pooled) because pgbouncer doesn't support prepared statements
+- If migrations fail, check that `DIRECT_URL` is set correctly
 
 ### CORS Errors
 - Verify `APP_URL` in Render matches your Vercel URL exactly
@@ -212,7 +234,8 @@ npx prisma migrate dev --name your_migration_name
 ## Production Checklist
 
 - [ ] Supabase project created
-- [ ] DATABASE_URL set in Render
+- [ ] DATABASE_URL set in Render (Transaction pooler, port 6543)
+- [ ] DIRECT_URL set in Render (Session, port 5432)
 - [ ] GROQ_API_KEY set in Render
 - [ ] NEWS_API_KEY set in Render
 - [ ] ADMIN_API_KEY generated and set
