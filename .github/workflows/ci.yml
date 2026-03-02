@@ -74,6 +74,7 @@ jobs:
         run: npm run db:migrate
         env:
           DATABASE_URL: postgresql://aidwatch:aidwatch@localhost:5432/aidwatch_test
+          DIRECT_URL: postgresql://aidwatch:aidwatch@localhost:5432/aidwatch_test
 
       - name: Run tests
         run: npm test
