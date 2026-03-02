@@ -5,7 +5,7 @@ const options: swaggerJsdoc.Options = {
     openapi: '3.0.0',
     info: {
       title: 'AidWatch API',
-      version: '1.0.0',
+      version: '0.1.0',
       description: 'AI-powered early warning system for humanitarian crises',
       contact: {
         name: 'AidWatch Team',

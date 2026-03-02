@@ -1,5 +1,9 @@
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
+import ThemeToggle from './ThemeToggle';
+import AuthForm from './AuthForm';
+import UserMenu from './UserMenu';
+import { useAuth } from '../contexts';
 
 export interface StaggeredMenuItem {
   label: string;
@@ -51,6 +55,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 }: StaggeredMenuProps) => {
   const [open, setOpen] = useState(false);
   const openRef = useRef(false);
+  const { isAuthenticated } = useAuth();
 
   const panelRef = useRef<HTMLDivElement | null>(null);
   const preLayersRef = useRef<HTMLDivElement | null>(null);
@@ -101,11 +106,10 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
       gsap.set(icon, { rotate: 0, transformOrigin: '50% 50%' });
 
       gsap.set(textInner, { yPercent: 0 });
-
-      if (toggleBtnRef.current) gsap.set(toggleBtnRef.current, { color: menuButtonColor });
     });
     return () => ctx.revert();
-  }, [menuButtonColor, position]);
+    // Only position should trigger a full reset - color changes are handled by a separate effect
+  }, [position]);
 
   const buildOpenTimeline = useCallback(() => {
     const panel = panelRef.current;
@@ -422,7 +426,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
         </div>
 
         <header
-          className="staggered-menu-header absolute top-0 left-0 w-full flex items-center justify-between px-6 py-4 bg-white/80 backdrop-blur-sm pointer-events-none z-20"
+          className="staggered-menu-header absolute top-0 left-0 w-full flex items-center justify-between px-6 py-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm pointer-events-none z-20"
           aria-label="Main navigation header"
         >
           <button 
@@ -435,7 +439,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
               <img
                 src={logoUrl}
                 alt="Logo"
-                className="sm-logo-img block h-8 w-auto object-contain"
+                className="sm-logo-img block h-14 w-auto object-contain"
                 draggable={false}
               />
             ) : (
@@ -445,14 +449,14 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <span className="text-lg font-bold text-slate-900">AidWatch</span>
+                <span className="text-lg font-bold text-slate-900 dark:text-white">AidWatch</span>
               </div>
             )}
           </button>
 
           <button
             ref={toggleBtnRef}
-            className="sm-toggle relative inline-flex items-center gap-2 bg-transparent border-0 cursor-pointer font-medium leading-none overflow-visible pointer-events-auto text-slate-700 hover:text-slate-900 transition-colors"
+            className="sm-toggle relative inline-flex items-center gap-2 bg-transparent border-0 cursor-pointer font-medium leading-none overflow-visible pointer-events-auto text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-colors"
             aria-label={open ? 'Close menu' : 'Open menu'}
             aria-expanded={open}
             aria-controls="staggered-menu-panel"
@@ -493,7 +497,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
         <aside
           id="staggered-menu-panel"
           ref={panelRef}
-          className="staggered-menu-panel absolute top-0 right-0 h-full bg-white/95 flex flex-col overflow-y-auto z-10 backdrop-blur-xl pointer-events-auto shadow-2xl"
+          className="staggered-menu-panel absolute top-0 right-0 h-full w-[clamp(300px,35vw,400px)] bg-white/95 dark:bg-slate-900/95 flex flex-col overflow-y-auto z-10 backdrop-blur-xl pointer-events-auto shadow-2xl"
           aria-hidden={!open}
         >
           <div className="sm-panel-inner flex-1 flex flex-col justify-center px-8 md:px-12 py-20">
@@ -507,7 +511,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
                   items.map((it, idx) => (
                     <li className="sm-panel-itemWrap relative overflow-hidden" key={it.label + idx}>
                       <a
-                        className="sm-panel-item group relative text-slate-800 font-semibold text-2xl md:text-3xl cursor-pointer leading-relaxed tracking-tight transition-all duration-200 ease-out inline-flex items-center gap-3 no-underline py-3 hover:text-blue-600 hover:translate-x-2"
+                        className="sm-panel-item group relative text-slate-800 dark:text-slate-100 font-semibold text-2xl md:text-3xl cursor-pointer leading-relaxed tracking-tight transition-all duration-200 ease-out inline-flex items-center gap-3 no-underline py-3 hover:text-blue-600 dark:hover:text-blue-400 hover:translate-x-2"
                         href={it.link}
                         aria-label={it.ariaLabel}
                         data-index={idx + 1}
@@ -534,8 +538,31 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
               </ul>
             </nav>
 
+            {/* Account Section */}
+            <div className="pt-6 border-t border-slate-200 dark:border-slate-700 mt-8">
+              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Account</h3>
+              {isAuthenticated ? (
+                <UserMenu 
+                  onNavigate={(link) => {
+                    closeMenu();
+                    setTimeout(() => {
+                      onNavigate?.(link);
+                    }, 350);
+                  }} 
+                />
+              ) : (
+                <AuthForm />
+              )}
+            </div>
+
+            {/* Theme Toggle */}
+            <div className="pt-6 border-t border-slate-200 dark:border-slate-700 mt-6">
+              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Theme</h3>
+              <ThemeToggle className="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600" />
+            </div>
+
             {displaySocials && socialItems && socialItems.length > 0 && (
-              <div className="sm-socials pt-8 border-t border-slate-200 mt-8" aria-label="External resources">
+              <div className="sm-socials pt-6 border-t border-slate-200 dark:border-slate-700 mt-6" aria-label="External resources">
                 <h3 className="sm-socials-title m-0 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Data Sources</h3>
                 <ul
                   className="sm-socials-list list-none m-0 p-0 flex flex-row items-center gap-5 flex-wrap"
@@ -547,7 +574,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
                         href={s.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="sm-socials-link text-sm font-medium text-slate-500 no-underline relative inline-block py-1 transition-colors duration-200 hover:text-blue-600"
+                        className="sm-socials-link text-sm font-medium text-slate-500 dark:text-slate-400 no-underline relative inline-block py-1 transition-colors duration-200 hover:text-blue-600 dark:hover:text-blue-400"
                       >
                         {s.label}
                       </a>
@@ -562,10 +589,9 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 
       <style>{`
 .sm-scope .staggered-menu-wrapper { position: relative; width: 100%; height: 100%; z-index: 50; pointer-events: none; }
-.sm-scope .staggered-menu-header { position: absolute; top: 0; left: 0; width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; background: rgba(255,255,255,0.8); backdrop-filter: blur(4px); pointer-events: none; z-index: 20; }
 .sm-scope .staggered-menu-header > * { pointer-events: auto; }
 .sm-scope .sm-logo { display: flex; align-items: center; user-select: none; }
-.sm-scope .sm-logo-img { display: block; height: 32px; width: auto; object-fit: contain; }
+.sm-scope .sm-logo-img { display: block; height: 56px; width: auto; object-fit: contain; }
 .sm-scope .sm-toggle { position: relative; display: inline-flex; align-items: center; gap: 0.5rem; background: transparent; border: none; cursor: pointer; font-weight: 500; line-height: 1; overflow: visible; }
 .sm-scope .sm-toggle:focus-visible { outline: 2px solid #3b82f6; outline-offset: 4px; border-radius: 4px; }
 .sm-scope .sm-toggle-textWrap { position: relative; margin-right: 0.25em; display: inline-block; height: 1em; overflow: hidden; white-space: nowrap; }
@@ -574,8 +600,6 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 .sm-scope .sm-icon { position: relative; width: 14px; height: 14px; flex: 0 0 14px; display: inline-flex; align-items: center; justify-content: center; }
 .sm-scope .sm-panel-itemWrap { position: relative; overflow: hidden; }
 .sm-scope .sm-icon-line { position: absolute; left: 50%; top: 50%; width: 100%; height: 2px; background: currentColor; border-radius: 2px; transform: translate(-50%, -50%); }
-.sm-scope .staggered-menu-panel { position: absolute; top: 0; right: 0; width: clamp(300px, 35vw, 400px); height: 100%; background: rgba(255,255,255,0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); display: flex; flex-direction: column; overflow-y: auto; z-index: 10; box-shadow: -8px 0 30px rgba(0,0,0,0.08); }
-.sm-scope [data-position='left'] .staggered-menu-panel { right: auto; left: 0; box-shadow: 8px 0 30px rgba(0,0,0,0.08); }
 .sm-scope .sm-prelayers { position: absolute; top: 0; right: 0; bottom: 0; width: clamp(300px, 35vw, 400px); pointer-events: none; z-index: 5; }
 .sm-scope [data-position='left'] .sm-prelayers { right: auto; left: 0; }
 .sm-scope .sm-prelayer { position: absolute; top: 0; right: 0; height: 100%; width: 100%; transform: translateX(0); }
@@ -590,7 +614,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 .sm-scope .sm-panel-list[data-numbering] { counter-reset: smItem; }
 .sm-scope .sm-panel-list[data-numbering] .sm-panel-item::before { counter-increment: smItem; content: '0' counter(smItem); position: absolute; left: -2rem; top: 50%; transform: translateY(-50%); font-size: 12px; font-weight: 500; color: #94a3b8; letter-spacing: 0; pointer-events: none; user-select: none; opacity: var(--sm-num-opacity, 0); }
 @media (max-width: 768px) { 
-  .sm-scope .staggered-menu-panel { width: 100%; } 
+  .sm-scope .staggered-menu-panel { width: 100% !important; } 
   .sm-scope .sm-prelayers { width: 100%; }
 }
       `}</style>

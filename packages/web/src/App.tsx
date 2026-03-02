@@ -1,11 +1,13 @@
 import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
 import CrisisList from './pages/CrisisList';
 import CrisisDetail from './pages/CrisisDetail';
 import MapView from './pages/MapView';
 import Alerts from './pages/Alerts';
 import Subscribe from './pages/Subscribe';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -16,7 +18,17 @@ function App() {
         <Route path="crises/:id" element={<CrisisDetail />} />
         <Route path="map" element={<MapView />} />
         <Route path="alerts" element={<Alerts />} />
-        <Route path="subscribe" element={<Subscribe />} />
+        {/* Protected routes - require authentication */}
+        <Route path="subscribe" element={
+          <ProtectedRoute>
+            <Subscribe />
+          </ProtectedRoute>
+        } />
+        <Route path="profile" element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        } />
       </Route>
     </Routes>
   );

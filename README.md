@@ -116,24 +116,34 @@ AidWatch/
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/crises` | List all crises |
+| GET | `/api/health` | Health check |
+| GET | `/api/health/detailed` | Detailed health with stats |
+| GET | `/api/crises` | List all crises (with filters) |
 | GET | `/api/crises/:id` | Get crisis details |
+| GET | `/api/crises/:id/timeline` | Get crisis event timeline |
+| GET | `/api/crises/trends` | Get historical trends |
 | GET | `/api/alerts` | List alerts |
-| POST | `/api/subscriptions` | Create email subscription |
-| GET | `/api/ai/status` | Get AI processing status |
-| POST | `/api/ai/jobs/ingest` | Trigger data ingestion |
-| POST | `/api/ai/jobs/analyze` | Trigger AI analysis |
+| GET | `/api/feeds/rss` | RSS feed of crises |
+| GET | `/api/feeds/atom` | Atom feed of crises |
+| GET | `/api/ai/stats` | Get AI processing stats |
+| GET | `/api/ai/jobs/status` | Get job status |
+| POST | `/api/ai/jobs/ingest` | Trigger data ingestion (admin) |
+| POST | `/api/ai/jobs/analyze` | Trigger AI analysis (admin) |
+| GET | `/api/docs` | Swagger API documentation |
 
 ## Scheduled Jobs
 
 | Job | Schedule | Description |
 |-----|----------|-------------|
 | Data Ingestion | Every 30 min | Fetch from all sources |
-| AI Analysis | Every 15 min | Process new events |
-| Summary Generation | Every 20 min | Generate crisis summaries |
-| Immediate Alerts | Every 15 min | Send urgent notifications |
-| Daily Digest | 8 AM UTC | Daily summary emails |
-| Weekly Digest | Monday 8 AM | Weekly summary emails |
+| AI Analysis | Every 30 min | Process new events (configurable) |
+| Summary Generation | Every 30 min | Generate crisis summaries |
+| Early Warning | Every hour | Detect emerging crises |
+| Immediate Alerts | Every 15 min | Send urgent notifications* |
+| Daily Digest | 8 AM UTC | Daily summary emails* |
+| Weekly Digest | Monday 8 AM | Weekly summary emails* |
+
+*Email features disabled by default in v1 (`ENABLE_EMAIL_NOTIFICATIONS=false`)
 
 ## License
 

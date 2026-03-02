@@ -1,38 +1,24 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
+import { useAuth } from './AuthContext';
 
 interface DemoModeContextValue {
   isDemo: boolean;
-  apiKey: string | null;
-  setApiKey: (key: string | null) => void;
   isAdmin: boolean;
 }
 
 const DemoModeContext = createContext<DemoModeContextValue | undefined>(undefined);
 
-const API_KEY_STORAGE = 'aidwatch-api-key';
-
 export function DemoModeProvider({ children }: { children: ReactNode }) {
-  const [apiKey, setApiKeyState] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(API_KEY_STORAGE);
-    }
-    return null;
-  });
+  const { isAuthenticated, user } = useAuth();
 
-  const setApiKey = (key: string | null) => {
-    setApiKeyState(key);
-    if (key) {
-      localStorage.setItem(API_KEY_STORAGE, key);
-    } else {
-      localStorage.removeItem(API_KEY_STORAGE);
-    }
-  };
-
-  const isDemo = !apiKey;
-  const isAdmin = !!apiKey;
+  // User is in demo mode if not authenticated
+  const isDemo = !isAuthenticated;
+  
+  // User is admin if authenticated with ADMIN role
+  const isAdmin = isAuthenticated && user?.role === 'ADMIN';
 
   return (
-    <DemoModeContext.Provider value={{ isDemo, apiKey, setApiKey, isAdmin }}>
+    <DemoModeContext.Provider value={{ isDemo, isAdmin }}>
       {children}
     </DemoModeContext.Provider>
   );
@@ -45,3 +31,4 @@ export function useDemoMode() {
   }
   return context;
 }
+

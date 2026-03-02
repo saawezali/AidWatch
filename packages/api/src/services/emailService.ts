@@ -23,7 +23,7 @@ class EmailService {
   private appUrl: string;
 
   constructor() {
-    this.fromEmail = process.env.EMAIL_FROM || 'alerts@aidwatch.org';
+    this.fromEmail = process.env.SMTP_FROM || 'alerts@aidwatch.org';
     this.appUrl = process.env.APP_URL || 'http://localhost:5173';
   }
 

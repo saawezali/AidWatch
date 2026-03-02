@@ -1,8 +1,12 @@
+import dotenv from 'dotenv';
+// Load environment variables FIRST before any other imports
+dotenv.config({ path: '../../.env' });
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 import swaggerUi from 'swagger-ui-express';
 
 import { logger } from './lib/logger';
@@ -21,8 +25,7 @@ import aiRoutes from './routes/ai';
 import webhookRoutes from './routes/webhooks';
 import subscriptionRoutes from './routes/subscriptions';
 import feedRoutes from './routes/feeds';
-
-dotenv.config({ path: '../../.env' });
+import authRoutes from './routes/auth';
 
 const app = express();
 const PORT = process.env.API_PORT || 3001;
@@ -38,10 +41,17 @@ app.use(helmet({
     },
   },
 }));
+// CORS configuration
+const corsOrigins = process.env.NODE_ENV === 'production'
+  ? [
+      process.env.APP_URL,                    // Your Vercel frontend URL
+      'https://aidwatch.vercel.app',          // Default Vercel domain
+      /\.vercel\.app$/,                       // Any Vercel preview deployments
+    ].filter(Boolean)
+  : ['http://localhost:5173', 'http://localhost:3000'];
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://aidwatch.org'] 
-    : ['http://localhost:5173', 'http://localhost:3000'],
+  origin: corsOrigins as (string | RegExp)[],
   credentials: true,
 }));
 
@@ -64,6 +74,7 @@ app.use('/api/ai/', strictLimiter);
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Demo mode check - adds isDemo flag to requests
 app.use('/api/', checkDemoMode);
@@ -79,6 +90,7 @@ app.get('/api/docs.json', (req, res) => {
 });
 
 // API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/crises', crisisRoutes);
 app.use('/api/events', eventRoutes);
@@ -102,8 +114,9 @@ process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
 // Start server
-app.listen(PORT, () => {
-  logger.info(`[Server] AidWatch API running on http://localhost:${PORT}`);
+const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+app.listen(Number(PORT), HOST, () => {
+  logger.info(`[Server] AidWatch API running on http://${HOST}:${PORT}`);
   logger.info(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
   
   // Initialize scheduled jobs for data ingestion and AI analysis

@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
-import { ThemeProvider, DemoModeProvider } from './contexts';
+import { ThemeProvider, AuthProvider, DemoModeProvider } from './contexts';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -20,9 +20,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <ThemeProvider>
-          <DemoModeProvider>
-            <App />
-          </DemoModeProvider>
+          <AuthProvider>
+            <DemoModeProvider>
+              <App />
+            </DemoModeProvider>
+          </AuthProvider>
         </ThemeProvider>
       </BrowserRouter>
     </QueryClientProvider>

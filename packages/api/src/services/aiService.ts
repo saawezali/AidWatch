@@ -3,6 +3,68 @@ import { logger } from '../lib/logger';
 import { analyzeContent, generateSummary, detectCrisisSignals, AnalysisResult } from '../ai/analyzer';
 import { CrisisType, Severity, CrisisStatus, SummaryType } from '@prisma/client';
 
+// Country center coordinates for map display
+const COUNTRY_COORDINATES: Record<string, { lat: number; lng: number }> = {
+  'Afghanistan': { lat: 33.93, lng: 67.71 },
+  'Bangladesh': { lat: 23.68, lng: 90.35 },
+  'Burkina Faso': { lat: 12.24, lng: -1.56 },
+  'Cameroon': { lat: 7.37, lng: 12.35 },
+  'Central African Republic': { lat: 6.61, lng: 20.94 },
+  'Chad': { lat: 15.45, lng: 18.73 },
+  'Colombia': { lat: 4.57, lng: -74.30 },
+  'Democratic Republic of the Congo': { lat: -4.04, lng: 21.76 },
+  'DRC': { lat: -4.04, lng: 21.76 },
+  'Ethiopia': { lat: 9.15, lng: 40.49 },
+  'Haiti': { lat: 18.97, lng: -72.29 },
+  'India': { lat: 20.59, lng: 78.96 },
+  'Iraq': { lat: 33.22, lng: 43.68 },
+  'Kenya': { lat: -0.02, lng: 37.91 },
+  'Lebanon': { lat: 33.85, lng: 35.86 },
+  'Libya': { lat: 26.34, lng: 17.23 },
+  'Madagascar': { lat: -18.77, lng: 46.87 },
+  'Malawi': { lat: -13.25, lng: 34.30 },
+  'Mali': { lat: 17.57, lng: -4.00 },
+  'Mozambique': { lat: -18.67, lng: 35.53 },
+  'Myanmar': { lat: 21.91, lng: 95.96 },
+  'Nepal': { lat: 28.39, lng: 84.12 },
+  'Niger': { lat: 17.61, lng: 8.08 },
+  'Nigeria': { lat: 9.08, lng: 8.68 },
+  'Pakistan': { lat: 30.38, lng: 69.35 },
+  'Palestine': { lat: 31.95, lng: 35.23 },
+  'Philippines': { lat: 12.88, lng: 121.77 },
+  'Somalia': { lat: 5.15, lng: 46.20 },
+  'South Sudan': { lat: 6.87, lng: 31.31 },
+  'Sudan': { lat: 12.86, lng: 30.22 },
+  'Syria': { lat: 34.80, lng: 39.00 },
+  'Turkey': { lat: 38.96, lng: 35.24 },
+  'Ukraine': { lat: 48.38, lng: 31.17 },
+  'Venezuela': { lat: 6.42, lng: -66.59 },
+  'Yemen': { lat: 15.55, lng: 48.52 },
+  'Zimbabwe': { lat: -19.02, lng: 29.15 },
+};
+
+// Get coordinates from country name
+function getCountryCoordinates(country: string | undefined): { lat: number | null; lng: number | null } {
+  if (!country) return { lat: null, lng: null };
+  
+  // Try exact match first
+  if (COUNTRY_COORDINATES[country]) {
+    return { lat: COUNTRY_COORDINATES[country].lat, lng: COUNTRY_COORDINATES[country].lng };
+  }
+  
+  // Try case-insensitive/partial match
+  const normalizedCountry = country.toLowerCase();
+  for (const [name, coords] of Object.entries(COUNTRY_COORDINATES)) {
+    if (name.toLowerCase() === normalizedCountry || 
+        normalizedCountry.includes(name.toLowerCase()) ||
+        name.toLowerCase().includes(normalizedCountry)) {
+      return { lat: coords.lat, lng: coords.lng };
+    }
+  }
+  
+  return { lat: null, lng: null };
+}
+
 // Map AI analysis crisis types to Prisma enum
 function mapCrisisType(aiType: string): CrisisType {
   const typeMap: Record<string, CrisisType> = {
@@ -179,6 +241,14 @@ async function createCrisisFromAnalysis(
 ) {
   // Extract primary location
   const primaryLocation = analysis.entities.locations[0] || event.location || 'Unknown Location';
+  const country = extractCountry(analysis.entities.locations);
+  
+  // Get coordinates: prefer event coordinates, fallback to country lookup
+  const eventCoords = event.latitude && event.longitude 
+    ? { lat: event.latitude, lng: event.longitude }
+    : null;
+  const countryCoords = getCountryCoordinates(country || primaryLocation);
+  const coordinates = eventCoords || countryCoords;
 
   const crisis = await prisma.crisis.create({
     data: {
@@ -189,9 +259,9 @@ async function createCrisisFromAnalysis(
       status: CrisisStatus.EMERGING,
       confidence: analysis.confidence,
       location: primaryLocation,
-      country: extractCountry(analysis.entities.locations),
-      latitude: event.latitude,
-      longitude: event.longitude,
+      country: country,
+      latitude: coordinates.lat,
+      longitude: coordinates.lng,
       tags: [...analysis.entities.keywords.slice(0, 10)],
       events: {
         connect: { id: event.id },

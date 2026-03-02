@@ -188,6 +188,8 @@ router.patch(
       severity: z.nativeEnum(Severity).optional(),
       status: z.nativeEnum(CrisisStatus).optional(),
       tags: z.array(z.string()).optional(),
+      latitude: z.number().min(-90).max(90).optional(),
+      longitude: z.number().min(-180).max(180).optional(),
     });
 
     const data = updateSchema.parse(req.body);

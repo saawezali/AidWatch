@@ -2,14 +2,18 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import Squares from './Squares';
 import StaggeredMenu from './StaggeredMenu';
 import DemoBanner from './DemoBanner';
-import ThemeToggle from './ThemeToggle';
+import { useTheme, useAuth } from '../contexts';
 
-const menuItems = [
+const baseMenuItems = [
   { label: 'Dashboard', ariaLabel: 'Go to dashboard', link: '/' },
   { label: 'Crises', ariaLabel: 'View active crises', link: '/crises' },
   { label: 'Map', ariaLabel: 'Open map view', link: '/map' },
   { label: 'Alerts', ariaLabel: 'View alerts', link: '/alerts' },
+];
+
+const authMenuItems = [
   { label: 'Subscribe', ariaLabel: 'Subscribe to alerts', link: '/subscribe' },
+  { label: 'Profile', ariaLabel: 'View your profile', link: '/profile' },
 ];
 
 const resourceItems = [
@@ -21,17 +25,17 @@ const resourceItems = [
 
 export default function Layout() {
   const navigate = useNavigate();
+  const { resolvedTheme } = useTheme();
+  const { isAuthenticated } = useAuth();
+  const isDark = resolvedTheme === 'dark';
+
+  // Add authenticated-only menu items when logged in
+  const menuItems = isAuthenticated 
+    ? [...baseMenuItems, ...authMenuItems]
+    : baseMenuItems;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-blue-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/30">
-      {/* Demo Banner */}
-      <DemoBanner />
-      
-      {/* Theme Toggle - Fixed position */}
-      <div className="fixed top-4 left-4 z-50">
-        <ThemeToggle className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-sm" />
-      </div>
-      
       {/* Staggered Menu */}
       <StaggeredMenu
         position="right"
@@ -39,10 +43,10 @@ export default function Layout() {
         socialItems={resourceItems}
         displaySocials={true}
         displayItemNumbering={true}
-        menuButtonColor="#334155"
-        openMenuButtonColor="#334155"
+        menuButtonColor={isDark ? '#e2e8f0' : '#334155'}
+        openMenuButtonColor={isDark ? '#e2e8f0' : '#334155'}
         changeMenuColorOnOpen={true}
-        colors={['#dbeafe', '#60a5fa', '#3b82f6']}
+        colors={isDark ? ['#1e3a5f', '#2563eb', '#1d4ed8'] : ['#dbeafe', '#60a5fa', '#3b82f6']}
         accentColor="#3b82f6"
         isFixed={true}
         onNavigate={(link) => navigate(link)}
@@ -55,15 +59,17 @@ export default function Layout() {
           <Squares 
             direction="diagonal"
             speed={0.4}
-            borderColor="#cbd5e1"
+            borderColor={isDark ? '#334155' : '#cbd5e1'}
             squareSize={45}
-            hoverFillColor="#bfdbfe"
+            hoverFillColor={isDark ? '#1e3a5f' : '#bfdbfe'}
           />
         </div>
 
         {/* Page content */}
-        <main className="flex-1 p-4 md:p-6 pt-20 animate-fade-in relative z-10">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 p-4 md:p-6 pt-24 animate-fade-in relative z-10">
+          <div className="max-w-7xl pt-11 mx-auto">
+            {/* Demo Banner */}
+            <DemoBanner />
             <Outlet />
           </div>
         </main>
